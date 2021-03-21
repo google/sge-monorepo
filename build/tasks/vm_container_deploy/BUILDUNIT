@@ -1,0 +1,10 @@
+build_unit {
+  name: "vm_container_deploy"
+  target: ":vm_container_deploy"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "vm_container_deploy_build_test"
+  build_unit: ":vm_container_deploy"
+}

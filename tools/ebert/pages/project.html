@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+<head>
+  <link href="/common.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <title>Ebert [[.project]] Dashboard </title>
+</head>
+<body>
+<div id="project">
+  <v-app>
+    <v-app-bar app elevate-on-scroll color="indigo" dark>
+      <v-app-bar-nav-icon>
+        <a href="/dashboard/"><img src="/ebert.png" height="48"></img></a>
+      </v-app-bar-nav-icon>
+      <v-toolbar-title>{{project}} Dashboard</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-menu bottom
+              close-on-click
+              close-on-content-click
+              left
+              offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn icon v-bind="attrs" v-on="on">
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-btn href="/dashboard/" text>Dashboard</v-btn>
+          </v-list-item>
+          <v-list-item>
+            <v-btn href="/browse/" text>Browse Files</v-btn>
+          </v-list-item>
+          <v-list-item>
+            <v-btn href="/projects/" text>Project Selector</v-btn>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-app-bar>
+    <v-main>
+
+      <v-container fluid>
+        <v-expansion-panels accordion multiple v-model="expandedSections">
+          <v-expansion-panel v-for="(cls, name) in sections"
+                             :key="name">
+            <v-expansion-panel-header ripple>
+              Changelists
+            </v-expansion-panel-header>
+            <v-expansion-panel-content v-if="cls.length <= 0">
+              <i>No Changelists</i>
+            </v-expansion-panel-content>
+            <v-expansion-panel-content v-if="cls.length > 0">
+              <v-data-table
+                :items="cls"
+                :items-per-page="10">
+                <template v-slot:header="{ props: { headers } }">
+                  <thead>
+                    <tr>
+                      <th class="text-left">CL</th>
+                      <th class="text-left">Review</th>
+                      <th class="text-left">Author</th>
+                      <th class="text-left">Client</th>
+                      <th class="text-left" class="date">Date</th>
+                      <th class="text-left">Status</th>
+                      <th class="text-left">Description</th>
+                    </tr>
+                  </thead>
+                </template>
+                <template v-slot:body="{ items }">
+                  <tbody>
+                    <tr v-for="cl in items" :key="cl.Cl.Cl"
+                        @click="GotoChangelist(cl.Cl.Cl, cl.Review.id)">
+                      <td><a :href="`/review/${cl.Cl.Cl}`">{{cl.Cl.Cl}}</a></td>
+                      <td>{{cl.Review.state}}</td>
+                      <td><avatar :user="Ldap(cl.Cl.User)"></avatar></td>
+                      <td>{{cl.Cl.Client}}</td>
+                      <td class="date">{{cl.Cl.Date}}</td>
+                      <td>{{cl.Cl.Status}}</td>
+                      <td class="description">{{cl.Cl.Description}}</td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-data-table>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-container>
+
+    </v-main>
+  </v-app>
+</div>
+
+<use-component src="/components/avatar.html"></use-component>
+<script src="/script/util.js"></script>
+
+<!-- Main entry point for dashboard. -->
+<script>
+    var app = new Vue({
+        el: '#project',
+        vuetify: new Vuetify(),
+        data: Object.assign({}, {
+            expandedSections: [0],
+            numVisible: 100,
+        }, [[.]]),
+    computed: {
+        sections: function() {
+            return {
+                "CLs": this.cls || [],
+            };
+        },
+        visible() {
+          return this.cls.slice(0, this.numVisible);
+        },
+    },
+    methods: {
+        Unix2Date: Unix2Date,
+        Ldap: function(user) {
+            return user.split('(')[0].trim();
+        },
+        SectionLabel: function(label) {
+            if (label == "Incoming" || label == "Outgoing") {
+                return `${label} reviews`;
+            }
+            return `${label} changes`;
+        },
+        GotoChangelist : function(cl,review) {
+            if (!review) {
+                review = cl
+            }
+            window.location.href = `/review/${review}`
+        },
+    }
+    })
+</script>
+</body>
+</html>

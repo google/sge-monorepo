@@ -1,0 +1,16 @@
+manifest_entry:  {
+  name:  "cc_lib_existing"
+  set_as_local_repository:  true
+  git_src:  {
+    url:  "https://github.com/cc_lib/cc_lib_existing"
+    commit:  "2a89db4749d1aa860ea42ab50491cdc40d9a199a"
+  }
+}
+manifest_entry:  {
+  name:  "cc_lib_2b_added"
+  set_as_local_repository:  true
+  git_src:  {
+    url:  "https://github.com/cc_lib/cc_lib_2b_added"
+    commit:  "2a89db4749d1aa860ea42ab50491cdc40d9a199a"
+  }
+}

@@ -1,0 +1,37 @@
+load("@//libs/bzl/build_test:build_test.bzl", "build_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "cirunner_lib",
+    srcs = [
+        "cirunner.go",
+        "email_templates.go",
+        "presubmit.go",
+    ],
+    importpath = "sge-monorepo/build/cicd/cirunner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//build/cicd/cirunner/runnertool",
+        "//build/cicd/monorepo/universe",
+        "//build/cicd/sgeb/build",
+        "//environment/envinstall",
+        "//libs/go/email",
+        "//libs/go/log",
+        "//libs/go/log/cloudlog",
+        "//libs/go/p4lib",
+        "//libs/go/swarm",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "cirunner",
+    embed = [":cirunner_lib"],
+    visibility = ["//visibility:public"],
+)
+
+build_test(
+    name = "cirunner_build_test",
+    targets = [":cirunner"],
+)

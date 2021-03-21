@@ -1,0 +1,28 @@
+build_unit {
+  name: "perculator"
+  target: ":perculator"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "perculator_bin"
+  build_unit: "//tools/perculator"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=perculator"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":perculator"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

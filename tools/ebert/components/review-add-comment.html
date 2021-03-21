@@ -1,0 +1,147 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template id="review-add-comment-template">
+  <v-card :loading="posting">
+    <v-card-title v-if="title">{{title}}</v-card-title>
+    <v-card-text>
+      <v-textarea
+        class="add-comment"
+        label="Enter Comment"
+        rows="5"
+        autofocus
+        v-model="text"
+        @keydown.ctrl.enter="PostComment()">
+      </v-textarea>
+    </v-card-text>
+    <v-card-actions v-if="!posting">
+      <slot name="actions">
+        <v-spacer></v-spacer>
+        <v-checkbox v-model="resolved" label="Resolved"></v-checkbox>
+        <v-spacer></v-spacer><v-spacer></v-spacer>
+      </slot>
+      <v-spacer></v-spacer>
+      <v-btn @click="PostComment()">
+        {{saveText}}
+      </v-btn>
+      <v-btn text @click="Dismiss()">
+        Cancel
+      </v-btn>
+    </v-card-actions>
+    <v-card-text v-if="$slots.default">
+      <slot></slot>
+    </v-card-text>
+  </v-card>
+</template>
+<script>
+  Vue.component('review-add-comment', {
+    props: {
+      title: String,
+      leftLine: Number,
+      rightLine: Number,
+      reviewId: Number,
+      replyTo: Number,
+      file: String,
+      body: String,
+      context: Array,
+      draftId: Number,
+      publish: Boolean,
+      requestBuilder: {
+        type: Function,
+        default: function(data) {
+          return data;
+        },
+      },
+      saveText: {
+        type: String,
+        default: "Save",
+      },
+      resolve: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    template: '#review-add-comment-template',
+    data: function() {
+      return {
+        text: this.body,
+        posting: false,
+        resolved: this.resolve,
+      };
+    },
+    methods: {
+      Dismiss: function() {
+        this.posting = false;
+        this.$emit('dismiss-comment', true);
+      },
+      PostComment() {
+        this.posting = true;
+        let reviewId = this.reviewId;
+        if (!reviewId) {
+          reviewId = app.review.id;
+        }
+        if (reviewId) {
+          let url = `/ebert/comments/${reviewId}`;
+          let method = 'POST';
+          let flags = [];
+          if (this.resolved) {
+            flags = ['resolved'];
+          }
+          if (this.draftId) {
+            // If draftId is set, we're editing a comment,
+            // not creating a new one.
+            url = `${url}/${this.draftId}`;
+            method = 'PATCH';
+          } else if (this.publish) {
+            url = `${url}?publish=true`;
+          }
+          const body = JSON.stringify(this.requestBuilder({
+            body: this.text,
+            topic: 'reviews/' + reviewId,
+            flags: flags,
+            context: {
+              content: this.context,
+              comment: this.replyTo,
+              file: this.file,
+              leftLine: this.leftLine,
+              rightLine: this.rightLine,
+            },
+          }));
+          fetch(url, {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: body,
+          }).then(function(res) {
+            if (!res.ok) {
+              return res.text().then(msg => { throw msg });
+            }
+            return res.json();
+          }).then(function(comment) {
+            app.UpdateComments(comment);
+          }).catch(function(error) {
+            app.ShowError(error);
+          }).finally(() => (this.Dismiss()));
+        } else {
+          app.ShowError("reviewId not set");
+          this.Dismiss();
+        }
+      },
+    },
+  });
+</script>
+

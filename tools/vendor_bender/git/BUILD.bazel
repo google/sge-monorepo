@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "git",
+    srcs = ["git_pkg.go"],
+    importpath = "sge-monorepo/tools/vendor_bender/git",
+    visibility = ["//tools/vendor_bender:__subpackages__"],
+    deps = [
+        "//tools/vendor_bender/protos:metadata_go_proto",
+    ],
+)

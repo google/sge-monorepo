@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "sgetest",
+    srcs = ["sgetest.go"],
+    importpath = "sge-monorepo/libs/go/sgetest",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "sgetest_test",
+    srcs = ["sgetest_test.go"],
+    embed = [":sgetest"],
+)

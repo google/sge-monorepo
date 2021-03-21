@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "p4path",
+    srcs = ["p4path.go"],
+    importpath = "sge-monorepo/build/cicd/monorepo/p4path",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/cicd/monorepo",
+        "//libs/go/files",
+        "@com_github_mb0_glob//:glob",
+    ],
+)
+
+go_test(
+    name = "p4path_test",
+    srcs = ["p4path_test.go"],
+    embed = [":p4path"],
+    deps = [
+        "//build/cicd/monorepo",
+        "//libs/go/sgetest",
+        "@com_github_google_go_cmp//cmp",
+    ],
+)

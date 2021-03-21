@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@//libs/bzl/build_test:build_test.bzl", "build_test")
+
+go_library(
+    name = "unity_builder_lib",
+    srcs = [
+        "license.go",
+        "log.go",
+        "unity_builder.go",
+    ],
+    importpath = "sge-monorepo/build/builders/unity_builder",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/builders/unity_builder/protos:unity_builderpb_go_proto",
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//environment/envinstall",
+        "//libs/go/cloud/secretmanager",
+        "//libs/go/files",
+        "//libs/go/log",
+        "//libs/go/log/cloudlog",
+        "//libs/go/p4lib",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "unity_builder",
+    embed = [":unity_builder_lib"],
+    visibility = ["//visibility:public"],
+)

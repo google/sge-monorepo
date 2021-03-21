@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "mockjenkins",
+    testonly = 1,
+    srcs = ["mockjenkins.go"],
+    importpath = "sge-monorepo/build/cicd/jenkins/mockjenkins",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//build/cicd/jenkins",
+    ],
+)

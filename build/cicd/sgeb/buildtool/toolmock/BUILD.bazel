@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "toolmock",
+    testonly = 1,
+    srcs = ["toolmock.go"],
+    importpath = "sge-monorepo/build/cicd/sgeb/buildtool/toolmock",
+    visibility = [
+        "//build/cicd:__subpackages__",
+    ],
+    deps = [
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+    ],
+)

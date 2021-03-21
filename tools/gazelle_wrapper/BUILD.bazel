@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//libs/bzl/build_test:build_test.bzl", "build_test")
+
+go_library(
+    name = "gazelle_wrapper_lib",
+    srcs = ["gazelle_wrapper.go"],
+    importpath = "sge-monorepo/tools/gazelle_wrapper",
+    visibility = ["//visibility:private"],
+    deps = ["//libs/go/p4lib"],
+)
+
+go_binary(
+    name = "gazelle_wrapper",
+    out = "gazelle.exe",
+    embed = [":gazelle_wrapper_lib"],
+    visibility = ["//visibility:public"],
+)
+
+build_test(
+    name = "gazelle_wrapper_build_test",
+    targets = [":gazelle_wrapper"],
+)

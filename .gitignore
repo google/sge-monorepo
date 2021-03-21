@@ -1,0 +1,7 @@
+bazel-*
+helpers/*
+generated/*
+proto-gen/*
+third_party/*
+copy_over.bat
+sge/*

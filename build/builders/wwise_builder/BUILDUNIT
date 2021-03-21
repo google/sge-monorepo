@@ -1,0 +1,5 @@
+build_unit {
+  name: "wwise_builder"
+  target: ":wwise_builder"
+  args: "--config=windows-gnu"
+}

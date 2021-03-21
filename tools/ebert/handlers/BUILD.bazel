@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "handlers",
+    srcs = [
+        "handlers.go",
+        "mux.go",
+    ],
+    importpath = "sge-monorepo/tools/ebert/handlers",
+    visibility = ["//visibility:public"],
+    deps = ["//tools/ebert/ebert"],
+)
+
+go_test(
+    name = "handlers_test",
+    srcs = [
+        "handlers_test.go",
+        "mux_test.go",
+    ],
+    embed = [":handlers"],
+    deps = ["//tools/ebert/ebert"],
+)

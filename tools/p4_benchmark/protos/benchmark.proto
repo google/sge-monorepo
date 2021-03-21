@@ -1,0 +1,80 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package p4_benchmark;
+
+option go_package = "sge-monorepo/tools/p4_benchmark/protos/benchmarkpb";
+
+// Zip file specification.
+message ZipData {
+  // Path to the zip file.
+  string archive_path = 1;
+  // List of subdirectories to extract. If empty, extract all.
+  repeated string subdirectory = 2;
+}
+
+// Setup specification.
+message BenchmarkSetup {
+  // A list of archives used to seed the session.
+  repeated ZipData archive = 1;
+}
+
+// Cleanup specification.
+message BenchmarkTeardown {
+  // A list of shell commands to execute.
+  repeated string command = 1;
+}
+
+// A step of the benchmark execution. All commands can use the following variables:
+// $workspaceRoot - the workspace root as specified by the workspace_root argument
+// $sessionId - the session id
+// $sessionRoot - the local path to the benchmark session
+// $source - the source property of the current BenchmarkSet
+// $target - the target property of the current BenchmarkSet
+message BenchmarkStep {
+  string name = 1;
+  // A shell command to execute before the main command.
+  // All output in the form of key:value will be appended to CSV output of the step.
+  string before = 2;
+  // A shell command to execute.
+  string command = 3;
+}
+
+// A test set for a benchmark.
+message BenchmarkSet {
+  // Name of the set.
+  string name = 1;
+  // Source path relative to benchmark workspace root.
+  string source = 2;
+  // Target path relative to benchmark workspace root, used for move/branch/integrate tests.
+  string target = 3;
+}
+
+// A benchmark or test suite.
+message BenchmarkSuite {
+  // Name of the benchmark.
+  string name = 1;
+  // Description of the benchmark.
+  string description = 2;
+  // Setup specification.
+  BenchmarkSetup setup = 3;
+  // Cleanup specification.
+  BenchmarkTeardown teardown = 4;
+  // List of steps to run for this benchmark.
+  repeated BenchmarkStep step = 5;
+  // List of available benchmark sets to be used with the benchmark steps.
+  repeated BenchmarkSet set = 6;
+}

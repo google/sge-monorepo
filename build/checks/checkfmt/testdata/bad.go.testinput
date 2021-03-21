@@ -1,0 +1,6 @@
+package main
+
+// I am badly indented
+func    main() {
+}
+

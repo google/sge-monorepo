@@ -1,0 +1,323 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template id="review-info-template">
+  <v-card outlined
+          width="100%"
+          class="d-flex flex-column"
+          :style="'background-color: ' + color"
+          :loading="updating">
+    <v-row dense align="stretch">
+      <v-col cols="4">
+        <v-card-subtitle>
+          Reviewers
+        </v-card-subtitle>
+        <v-card-text>
+          <table width="100%">
+            <tbody>
+              <tr v-for="(items, section) in allParticipants">
+                <td width="12em">{{section}}:</td>
+                <td v-if="!edit || review.fake" width="100%">
+                  <avatar v-for="participant in items"
+                          v-if="participant.user != review.author"
+                          :key="participant.user"
+                          :user="participant.user"
+                          :badge="participant.value.vote.value">
+                  </avatar>
+                </td>
+                <td v-if="edit && !review.fake">
+                  <v-autocomplete :items="users"
+                                  :loading="loading"
+                                  :search-input.sync="search"
+                                  cache-items
+                                  chips
+                                  deletable-chips
+                                  dense
+                                  hide-no-data
+                                  hide-selected
+                                  multiple
+                                  return-object
+                                  prepend-icon="mdi-account-plus"
+                                  @change="search=''"
+                                  v-model="allNames[section]">
+                    <template v-slot:selection="data">
+                      <v-chip
+                        v-bind="data.attrs"
+                        :input-value="data.selected"
+                        close
+                        pill
+                        @click="data.select"
+                        @click:close="Remove(allNames[section], data.item)">
+                        <v-avatar left>
+                          <v-img :src="AvatarImg(data.item)"></v-img>
+                        </v-avatar>
+                        {{data.item}}
+                      </v-chip>
+                    </template>
+                    <template v-slot:item="data">
+                      <v-list-item-avatar>
+                        <img :src="AvatarImg(data.item)"></img>
+                      </v-list-item-avatar>
+                      <v-list-item-content>
+                        <v-list-item-title v-text="data.item">
+                        </v-list-item-title>
+                      </v-list-item-content>
+                    </template>
+                  </v-autocomplete>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </v-card-text>
+        <v-card-subtitle>
+          Bugs
+        </v-card-subtitle>
+      </v-col>
+      <v-col cols="8">
+        <v-card-subtitle>Description</v-card-subtitle>
+        <v-card-text>
+          <div
+            v-if="!edit"
+            readonly=true
+            background-color="white"
+            ref="description"
+            class="description description-white-bg"
+            rows="7"
+            autofocus
+            dense
+            no-resize
+            :outlined="edit"
+            height="100%"
+            v-html="description"
+            @keydown.ctrl.enter="Update()">
+          </div>
+          <v-textarea
+            v-if="edit"
+            background-color="white"
+            ref="description-ta"
+            class="description"
+            rows="7"
+            autofocus
+            dense
+            no-resize
+            :outlined="edit"
+            height="100%"
+            v-model="description"
+            @keydown.ctrl.enter="Update()">
+          </v-textarea>
+        </v-card-text>
+      </v-col>
+    </v-row>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn v-if="!edit" text @click="Edit()">Edit</v-btn>
+      <v-btn v-if="edit" @click="Update()">Save</v-btn>
+      <v-btn v-if="edit" text @click="Dismiss()">Cancel</v-btn>
+    </v-card-actions>
+  </v-card>
+</template>
+
+<script src='/script/util.js'></script>
+<script>Vue.component('review-info', {
+  template: '#review-info-template',
+  props: ['review'],
+  data() {
+    return {
+      allBugs: [],
+      allParticipants: {
+        "Required": [],
+        "Optional": [],
+      },
+      allNames: {
+        "Required": [],
+        "Optional": [],
+      },
+      edit: false,
+      loading: false,
+      loadingBugs: false,
+      updating: false,
+      description: this.Linkify(this.review.description),
+      bugs: [],
+      fixes: [],
+      users: [],
+      search: '',
+      searchBug: '',
+      searchFix: '',
+    };
+  },
+  computed: {
+    color() {
+      return ReviewColor(this.review);
+    },
+  },
+  methods: {
+    AvatarImg: AvatarImg,
+    Optional() {
+      return this.Participants(x => !x.required);
+    },
+    Required() {
+      return this.Participants(x => x.required);
+    },
+    Participants: function(filter) {
+      let participants = [];
+      if (!this.review.participants) {
+        return participants;
+      }
+      for (const [k, v] of Object.entries(this.review.participants)) {
+        if (k == this.review.author) {
+          continue;
+        }
+        if (filter(v)) {
+          participants.push({
+            user: k,
+            value: Object.assign({}, v, { user: k }),
+          });
+        }
+      }
+      return participants;
+    },
+    Remove: function(arr, item) {
+      let index = arr.indexOf(item);
+      if (index >= 0) {
+        arr.splice(index, 1);
+      }
+    },
+    Edit: function() {
+      this.edit = true;
+      // Remove the "linkified" link text
+      this.description = this.review.description;
+      this.$nextTick(() => {
+        this.$refs["description-ta"].focus();
+      });
+    },
+    Dismiss: function() {
+      Vue.set(this.allNames, 'Optional',
+              this.Optional().map(x => x.user));
+      Vue.set(this.allNames, 'Required',
+              this.Required().map(x => x.user));
+      this.description = this.Linkify(this.review.description);
+      this.edit = false;
+    },
+    Refresh: function() {
+      this.description = this.Linkify(this.review.description);
+      this.bugs = this.review.bugs || [];
+      this.fixes = this.review.fixes || [];
+      this.allParticipants = {
+        "Required": this.Required(),
+        "Optional": this.Optional(),
+      };
+      this.allNames = {
+        "Required": this.Required().map(x => x.user),
+        "Optional": this.Optional().map(x => x.user),
+      };
+    },
+    Update: function() {
+      let optional = this.allNames["Optional"];
+      let required = this.allNames["Required"];
+
+      let bugs = (this.bugs || []).map(x => Number(x))
+          .filter(x => !isNaN(x) && x != 0);
+      let fixes = (this.fixes || []).map(x => Number(x))
+          .filter(x => !isNaN(x) && x != 0);
+
+      this.updating = true;
+      let self = this;
+      fetch(`/ebert/review/${this.review.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reviewers: optional,
+          requiredReviewers: required,
+          description: this.description,
+          bugs: bugs,
+          fixes: fixes,
+        }),
+      }).then(function(res) {
+        if (!res.ok) {
+          return res.text().then(msg => { throw msg });
+        }
+        return res.json();
+      }).then(function(review) {
+        self.$emit('update-review', review);
+      }).catch(function(error) {
+        self.$emit('error', error);
+      }).finally(function() {
+        self.updating = false;
+        self.edit = false;
+      });
+    },
+    Linkify: Linkify,
+    UpdateBugs(newval, oldval) {
+      let oldid = parseInt(oldval);
+      if (!isNaN(oldid)) {
+        let bugs = this.bugs || [];
+        let idx = bugs.indexOf(oldid);
+        if (idx < 0) {
+          idx = this.allBugs.findIndex(function(x) {
+            return x.id == oldid;
+          });
+          if (idx >= 0) {
+            this.allBugs.splice(idx, 1);
+          }
+        }
+      }
+      let id = parseInt(newval);
+      if (!isNaN(id)) {
+        this.allBugs.splice(0, 0, {
+          id: id,
+          title: `Bug ${id}`,
+          link: `b/${id}`,
+        });
+      }
+    },
+  },
+  watch: {
+    review: function(newval) {
+      this.Refresh();
+    },
+    searchBug: function(newval, oldval) {
+      this.UpdateBugs(newval, oldval);
+    },
+    searchFix: function(newval, oldval) {
+      this.UpdateBugs(newval, oldval);
+    },
+    edit(newval) {
+      this.$emit('editing-review', newval);
+    },
+  },
+  created: function() {
+    this.Refresh();
+    this.loading = true
+    fetch(`/ebert/users`)
+      .then(function(res) {
+        if (!res.ok) {
+          return res.text().then(msg => { throw msg });
+        }
+        return res.json();
+      })
+      .then(res => {
+        this.users = (res.Users || []).map(function(x) {
+          return x.User;
+        });
+      })
+      .catch(err => {
+        this.$emit('error', err);
+      })
+      .finally(() => (this.loading = false));
+  },
+});</script>

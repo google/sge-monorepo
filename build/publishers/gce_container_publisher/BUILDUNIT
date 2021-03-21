@@ -1,0 +1,10 @@
+build_unit {
+  name: "gce_container_publisher"
+  target: ":gce_container_publisher"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "gce_container_publisher_build_test"
+  build_unit: ":gce_container_publisher"
+}

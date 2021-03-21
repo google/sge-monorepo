@@ -1,0 +1,212 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package build;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "sge-monorepo/build/cicd/sgeb/protos/buildpb";
+
+// Tool invocation information. Passed via --tool-invocation argument to
+// the build or test tool.
+message ToolInvocation {
+  // The location of the BUILDUNITS file's directory relative to
+  // the monorepo root.
+  // Enables resolving relative paths.
+  string build_unit_dir = 1;
+
+  repeated ArtifactSet inputs = 3;
+
+  // A directory that may be used to store log files.
+  string logs_dir = 8;
+
+  // Set if the tool invocation is a build invocation.
+  BuildInvocation build_invocation = 5;
+
+  // Set if the tool invocation is a test invocation.
+  TestInvocation test_invocation = 6;
+
+  // Set if the tool invocation is a publish invocation.
+  PublishInvocation publish_invocation = 7;
+
+  // Set if the tool invocation is a cron invocation.
+  CronInvocation cron_invocation = 9;
+
+  // Set if the tool invocation is a task invocation.
+  TaskInvocation task_invocation = 10;
+
+  // Any additional labels to pass to cloud logging.
+  repeated LogLabel log_labels = 11;
+}
+
+// LogLabel is a label intended for attaching to cloud log entries.
+message LogLabel {
+  string key = 1;
+  string value = 2;
+}
+
+// BuildInvocation is set on the tool invocation for build actions.
+message BuildInvocation {
+  // The output dir for this invocation.
+  // Prefer using buildtool.DeclareOutput instead of accessing this directly.
+  string output_dir = 1;
+
+  // The output stable path for this invocation.
+  // Prefer using buildtool.DeclareOutput instead of accessing this directly.
+  string output_stable_path = 2;
+
+  // The output base for this invocation. This is an absolute path that is a parent of output_dir.
+  string output_base = 3;
+}
+
+// TestInvocation is set on the tool invocation for test actions.
+message TestInvocation {
+}
+
+// PublishInvocation is set on the tool invocation for publish actions.
+message PublishInvocation {
+  // Base CL of the invocation.
+  // If one doesn't exist (local runs), set to 0.
+  int64 base_cl = 1;
+
+  // The CI system's result URL, if this is a CI run.
+  string ci_result_url = 2;
+
+  // Timestamp of the invocation of sgeb.
+  // If multiple publish units are published in the same invocation, they
+  // will all receive the same invocation time.
+  google.protobuf.Timestamp invocation_time = 3;
+}
+
+// CronInvocation is set on the tool invocation for cron actions.
+message CronInvocation {
+}
+
+// TaskInvocation is set on the tool invocation for tasks.
+message TaskInvocation {
+}
+
+// Results reported back from a build tool invocation.
+// The path to write on is passed via the --tool-invocation-result argument to the build tool.
+message BuildInvocationResult {
+  // Result of the build operation.
+  Result result = 1;
+
+  // Output artifacts.
+  ArtifactSet artifact_set = 2;
+}
+
+// Results reported back from a test tool invocation.
+// The path to write on is passed via the --tool-invocation-result argument to the test tool.
+message TestInvocationResult {
+  // Individual test results.
+  repeated Result results = 1;
+}
+
+// Results reported back from a test tool invocation.
+// The path to write on is passed via the --tool-invocation-result argument to the test tool.
+message PublishInvocationResult {
+  // Publish results
+  repeated PublishResult publish_results = 1;
+}
+
+// Results reported back from a publish tool invocation.
+// The path to write on is passed via the --tool-invocation-result argument to the publish tool.
+message PublishResult {
+  // Name of the package.
+  string name = 1;
+
+  // Version of the package that was built. Defined by the publish binary.
+  string version = 2;
+
+  // Files that were published.
+  repeated PublishedFile files = 3;
+}
+
+// Information about a file that was just published.
+message PublishedFile {
+  int64 size = 1;
+}
+
+// A result of an individual build/test.
+message Result {
+  // Name of the result.
+  string name = 1;
+
+  // Success.
+  bool success = 2;
+
+  // Optional. May be provided when the test system can attribute a failure
+  // to elsewhere than the immediate target.
+  string cause = 3;
+
+  // Logs from the action. If your action supports summary logs that succinctly describe
+  // a failure, add these here. For full logs use cloud logging.
+  repeated Artifact logs = 4;
+
+  // Optional. Command to run to apply a fix to the failure.
+  string fix = 5;
+}
+
+message ArtifactSet {
+  // A free-form string. The build unit is allowed to
+  // put whatever it wants in here to make it easy for
+  // dependents to locate the build result from a specific build unit.
+  string tag = 1;
+
+  // Output artifacts produced by the build unit.
+  repeated Artifact artifacts = 2;
+}
+
+message Artifact {
+  // A free-form string. The build unit is allowed to put whatever
+  // it wants here to make it easy for dependents to locate a particular
+  // artifact within an artifact set.
+  // Eg. "ue4-editor.exe" (or some tag that identifies that editor exe).
+  // For log files, "stderr" and similar are useful tags.
+  string tag = 1;
+
+  // A stable path that can be used for packaging.
+  // Stable paths are subsets of the output path, but omit
+  // any absolute path components or platform specific parts of
+  // the output path.
+  // This matches the concept of a Bazel short_path.
+  // For artifacts like logs this path can be empty.
+  string stable_path = 4;
+
+  // The uri of the build result. This could be a local build
+  // path (file:///<path>).
+  string uri = 2;
+
+  // Contents for inlined artifacts.
+  bytes contents = 3;
+}
+
+// The results of a sgeb build.
+message BuildResult {
+  Result overall_result = 1;
+
+  // Results filled in by the build binary run by sgeb.
+  BuildInvocationResult build_result = 4;
+}
+
+// The results of a sgeb test.
+message TestResult {
+  Result overall_result = 1;
+
+  // Results filled in by the binary executed by sgeb.
+  TestInvocationResult test_result = 4;
+}

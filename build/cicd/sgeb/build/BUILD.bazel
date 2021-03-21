@@ -1,0 +1,45 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "build",
+    srcs = [
+        "bep_result.go",
+        "build.go",
+    ],
+    importpath = "sge-monorepo/build/cicd/sgeb/build",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/cicd/bep",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//build/cicd/sgeb/protos:sgeb_go_proto",
+        "//environment/envinstall",
+        "//libs/go/files",
+        "//libs/go/log",
+        "//libs/go/log/cloudlog",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@io_bazel//src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_go_proto",
+        "@io_bazel_rules_go//proto/wkt:timestamp_go_proto",
+    ],
+)
+
+go_test(
+    name = "build_test",
+    srcs = [
+        "bep_result_test.go",
+        "build_test.go",
+    ],
+    embed = [":build"],
+    deps = [
+        "//build/cicd/bep",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//build/cicd/sgeb/protos:sgeb_go_proto",
+        "//libs/go/sgetest",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_google_go_cmp//cmp",
+        "@io_bazel//src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_go_proto",
+        "@io_bazel//src/main/protobuf:protobuf_go_proto",
+        "@org_golang_google_protobuf//encoding/protowire",
+    ],
+)

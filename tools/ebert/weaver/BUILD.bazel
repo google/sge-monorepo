@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_binary(
+    name = "weaver",
+    embed = [":weaver_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "weaver_lib",
+    srcs = ["weaver.go"],
+    importpath = "sge-monorepo/tools/ebert/weaver",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@org_golang_x_net//html",
+    ],
+)

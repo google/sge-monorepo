@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ebert",
+    srcs = ["ebert.go"],
+    importpath = "sge-monorepo/tools/ebert/ebert",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/cicd/jenkins",
+        "//libs/go/log",
+        "//libs/go/p4lib",
+        "//libs/go/swarm",
+        "//tools/ebert/flags",
+        "@io_opencensus_go//plugin/ochttp",
+        "@io_opencensus_go//stats",
+        "@io_opencensus_go//stats/view",
+        "@io_opencensus_go//trace",
+        "@org_golang_google_grpc//:go_default_library",
+    ],
+)

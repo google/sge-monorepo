@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "mockemail",
+    testonly = 1,
+    srcs = ["mockemail.go"],
+    importpath = "sge-monorepo/libs/go/email/mockemail",
+    visibility = ["//visibility:public"],
+    deps = ["//libs/go/email"],
+)

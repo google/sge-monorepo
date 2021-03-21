@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "rust",
+    srcs = ["rust_pkg.go"],
+    importpath = "sge-monorepo/tools/vendor_bender/rust",
+    visibility = ["//tools/vendor_bender:__subpackages__"],
+    deps = [
+        "//libs/go/files",
+        "//libs/go/p4lib",
+        "//tools/vendor_bender/protos:metadata_go_proto",
+        "@com_github_burntsushi_toml//:toml",
+    ],
+)
+
+go_test(
+    name = "rust_test",
+    size = "small",
+    srcs = ["rust_pkg_test.go"],
+    embed = [":rust"],
+)

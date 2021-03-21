@@ -1,0 +1,35 @@
+build_unit {
+  name: "bazel2vs"
+  target: ":bazel2vs"
+  args: "--config=windows"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":bazel2vs"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=bazel2vs"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+test_unit {
+    name: "test"
+    target: "..."
+    args: "--config=windows"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":bazel2vs"
+}
+
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

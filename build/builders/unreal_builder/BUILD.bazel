@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "unreal_builder_lib",
+    srcs = [
+        "config.go",
+        "unreal_builder.go",
+    ],
+    importpath = "sge-monorepo/build/builders/unreal_builder",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//environment/envinstall",
+        "//libs/go/files",
+        "//libs/go/log",
+        "//libs/go/log/cloudlog",
+        "//libs/go/sgeflag",
+        "@com_github_hashicorp_go_version//:go-version",
+    ],
+)
+
+go_binary(
+    name = "unreal_builder",
+    embed = [":unreal_builder_lib"],
+    visibility = ["//visibility:public"],
+)

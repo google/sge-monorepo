@@ -1,0 +1,10 @@
+build_unit {
+  name: "historian"
+  target: ":historian"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "historian_build_test"
+  build_unit: ":historian"
+}

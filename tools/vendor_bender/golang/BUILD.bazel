@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "golang",
+    srcs = [
+        "gazelle.go",
+        "gazelle_analyze.go",
+        "go_pkg.go",
+    ],
+    importpath = "sge-monorepo/tools/vendor_bender/golang",
+    visibility = ["//tools/vendor_bender:__subpackages__"],
+    deps = [
+        "//libs/go/files",
+        "//libs/go/p4lib",
+        "//tools/vendor_bender/bazel",
+        "//tools/vendor_bender/protos:metadata_go_proto",
+    ],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "trie",
+    srcs = ["path_trie.go"],
+    importpath = "sge-monorepo/libs/go/trie",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "trie_test",
+    srcs = ["path_trie_test.go"],
+    embed = [":trie"],
+)

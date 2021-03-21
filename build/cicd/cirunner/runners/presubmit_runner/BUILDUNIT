@@ -1,0 +1,10 @@
+build_unit {
+  name: "presubmit_runner"
+  target: ":presubmit_runner"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":presubmit_runner"
+}

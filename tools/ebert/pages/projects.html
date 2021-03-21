@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+<head>
+  <link href="/common.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <title>Ebert Project Selector</title>
+</head>
+<body>
+<div id="projects">
+  <v-app>
+    <v-app-bar app elevate-on-scroll color="indigo" dark>
+      <v-app-bar-nav-icon>
+        <a href="/dashboard/"><img src="/ebert.png" height="48"></img></a>
+      </v-app-bar-nav-icon>
+      <v-toolbar-title>Project Selector</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-menu bottom
+              close-on-click
+              close-on-content-click
+              left
+              offset-y>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn icon v-bind="attrs" v-on="on">
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item>
+            <v-btn href="/dashboard/" text>Dashboard</v-btn>
+          </v-list-item>
+          <v-list-item>
+            <v-btn href="/browse/" text>Browse Files</v-btn>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-app-bar>
+    <v-main>
+
+      <v-container fluid>
+        <v-expansion-panels accordion multiple v-model="expandedSections">
+          <v-expansion-panel v-for="(projects, name) in sections">
+            <v-expansion-panel-header ripple>
+              Projects
+            </v-expansion-panel-header>
+            <v-expansion-panel-content v-if="projects.length <= 0">
+              <i>No Projects</i>
+            </v-expansion-panel-content>
+            <v-expansion-panel-content v-if="projects.length > 0">
+              <v-simple-table fixed-header v-if="projects.length > 0">
+                <template v-slot:default>
+                  <thead>
+                  <tr>
+                    <th class="text-left">Name</th>
+                    <th class="text-left">Path</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="proj in projects" :key="projects.Name" @click="GotoProject(proj.Name)">
+                    <td>{{proj.Name}}</td>
+                    <td>{{proj.Path}}</td>
+                  </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+
+
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-container>
+
+    </v-main>
+  </v-app>
+</div>
+
+<use-component src="/components/avatar.html"></use-component>
+
+<!-- Main entry point for dashboard. -->
+<script>
+    var app = new Vue({
+        el: '#projects',
+        vuetify: new Vuetify(),
+        data: Object.assign({}, {
+            "expandedSections": [0],
+        }, [[.]]),
+    computed: {
+        sections: function() {
+            return {
+                "projects": this.projects || [],
+            }
+        },
+    },
+    methods: {
+        Unix2Date: function(unixtime) {
+            var d = new Date(unixtime * 1000);
+            return d.toDateString() + ' ' +
+                ('0' + d.getHours()).slice(-2) + ':' +
+                ('0' + d.getMinutes()).slice(-2);
+        },
+        Ldap: function(user) {
+            return user.split('(')[0].trim();
+        },
+        SectionLabel: function(label) {
+            if (label == "Incoming" || label == "Outgoing") {
+                return `${label} reviews`;
+            }
+            return `${label} changes`;
+        },
+        GotoProject : function(name) {
+            window.location.href = `/project/${name}`
+
+        }
+    }
+    })
+</script>
+</body>
+</html>

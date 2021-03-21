@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="/review.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <title>Ebert Review</title>
+  </head>
+  <body>
+    <div id="review">
+      <v-app>
+        <v-app-bar app elevate-on-scroll :color="statusColor" dark>
+          <v-app-bar-nav-icon>
+            <a href="/dashboard/"><img src="/ebert.png" height="48" ></img></a>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>
+            Review {{review.id}} by {{review.author}} {{statusText}}
+          </v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-progress-circular indeterminate v-if="refreshing > 0">
+          </v-progress-circular>
+          <v-dialog
+            v-model="replyDialog"
+            width="800">
+            <template v-slot:activator="{on, attrs}">
+              <v-btn text v-bind="attrs" v-on="on">Reply</v-btn>
+            </template>
+            <review-add-comment
+              title="Reply"
+              @dismiss-comment="replyDialog=false"
+              :request-builder="ReplyRequestBuilder()"
+              :publish="true"
+              :review-id="review.id"
+              save-text="Reply">
+              <template v-slot:actions v-if="user != review.author">
+                <v-spacer></v-spacer>
+                <v-spacer></v-spacer>
+                <v-spacer></v-spacer>
+                <v-spacer></v-spacer>
+                <v-spacer></v-spacer>
+                <v-checkbox label="LGTM" v-model="lgtm"></v-checkbox>
+                <v-spacer></v-spacer>
+                <v-checkbox label="Approve" v-model="approve"></v-checkbox>
+                <v-spacer></v-spacer>
+              </template>
+              <h3 v-if="draftComments.length > 0">Draft Comments</h3>
+              <template v-for="ci in draftComments">
+                <review-comment v-if="!ci.parent"
+                                action="replied"
+                                :summarize="true"
+                                :ci="ci"
+                                :key="ci.comment.id">
+                </review-comment>
+              </template>
+            </review-add-comment>
+          </v-dialog>
+          <v-btn text
+                 v-if="CanLGTM(user)"
+                 @click="LGTM()">Quick LGTM</v-btn>
+          <v-btn text
+                 v-if="CanApprove(user)"
+                 :disabled="approvalPending || review.status=='approved'"
+                 @click="Approve()">Approve</v-btn>
+          <v-menu bottom
+                  close-on-click
+                  close-on-content-click
+                  left
+                  offset-y>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item>
+                <v-btn href="/dashboard/" text>Dashboard</v-btn>
+              </v-list-item>
+              <v-list-item>
+                <v-btn href="/browse/" text>Browse Files</v-btn>
+              </v-list-item>
+              <v-list-item>
+                <v-btn href="/projects/" text>Project Selector</v-btn>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-app-bar>
+        <v-main>
+          <v-snackbar
+            multi-line
+            v-model="showErrors">
+            {{errorMessage}}
+            <template v-slot:action="{ attrs }">
+              <v-btn text v-bind="attrs" @click="showErrors = false">
+                Dismiss
+              </v-btn>
+            </template>
+          </v-snackbar>
+          <v-container fluid>
+            <review-info
+              :review="review"
+              :user="user"
+              @editing-review="EditingReview"
+              @update-review="UpdateReview"
+              @error="ShowError">
+            </review-info>
+            <v-row dense>
+              <v-tabs fixed-tabs v-model="tab">
+                <v-tab href="#files">Files</v-tab>
+                <v-tab href="#comments">
+                  <v-badge
+                    overlap
+                    :content="clComments.filter(x => !x.resolved).length"
+                    :value="clComments.filter(x => !x.resolved).length">
+                    Comments
+                    <v-icon v-if="comments.comments.length">
+                      mdi-comment-text
+                    </v-icon>
+                  </v-badge>
+                </v-tab>
+                <v-tab href="#testRuns">
+                  <v-badge inline
+                           :value="testRuns.length"
+                           :color="testRunColor"
+                           :icon="testRunBadge">
+                    Presubmits
+                  </v-badge>
+                </v-tab>
+              </v-tabs>
+              <v-tabs-items v-model="tab" class="sticky-container">
+                <v-tab-item value="files">
+                  <review-files
+                    @base-changed="UpdateBase"
+                    @curr-changed="UpdateCurr"
+                    :base="base"
+                    :curr="curr"
+                    :versions="review.versions"
+                    :loading="pairsLoading"
+                    :pairs="orderedPairs"
+                    :review="review.id"
+                    :comments="threadedComments">
+                  </review-files>
+                </v-tab-item>
+                <v-tab-item value="comments">
+                  <v-row dense class="full-width">
+                    <table width="98%">
+                      <tr v-for="ci in clComments"><td>
+                          <review-comment :ci="ci" action="commented"
+                                          :collapse="ci.resolved && ci.allRead"
+                                          :key="ci.comment.id">
+                          </review-comment>
+                      </td></tr>
+                    </table>
+                  </v-row>
+                </v-tab-item>
+                <v-tab-item value="testRuns">
+                  <v-row dense align-content="center">
+                    <v-layout justify-center>
+                      <v-btn @click="RunTests()">Run Presubmits</v-btn>
+                    </v-layout>
+                  </v-row>
+                  <v-row dense>
+                    <v-layout justify-center>
+                      <v-data-table class="full-width"
+                                    :headers="testRunHeaders"
+                                    :items="testRunItems"
+                                    :expanded.sync="expandedTestRuns"
+                                    item-key="id"
+                                    show-expand>
+                        <template v-slot:item.status="{ item }">
+                          <v-badge inline
+                                   left
+                                   :icon="TestRunToIcon(item.status)"
+                                   :color="TestRunToColor(item.status)">
+                            {{item.status}}
+                          </v-badge>
+                        </template>
+                        <template v-slot:expanded-item="{ headers, item }">
+                          <td :colspan="headers.length">
+                            <a v-if="item.url"
+                               :href="item.url"
+                               target="_blank">
+                              {{item.url}}
+                            </a>
+                            <object v-if="item.url"
+                                    class="jenkins"
+                                    :data="item.url + 'Text'">
+                            </object>
+                            <pre v-if="!item.url">Running...</pre>
+                          </td>
+                        </template>
+                      </v-data-table>
+                    </v-layout>
+                  </v-row>
+                </v-tab-item>
+              </v-tabs-items>
+            </v-row>
+          </v-container>
+        </v-main>
+      </v-app>
+    </div>
+
+    <script src="/script/util.js"></script>
+    <script src="/script/diff.js"></script>
+    <use-component src="/components/avatar.html"></use-component>
+    <use-component src="/components/review-info.html"></use-component>
+    <use-component src="/components/review-comment.html"></use-component>
+    <use-component src="/components/review-add-comment.html"></use-component>
+    <use-component src="/components/review-files.html"></use-component>
+    <use-component src="/components/image-diff.html"></use-component>
+    <use-component src="/components/text-diff.html"></use-component>
+
+    <script>
+      var app = new Vue({
+        el: '#review',
+        data: Object.assign({}, {
+          tab: null,
+          pairsLoading: false,
+          diffs: {},
+          loadingDiffs: {},
+          addComments: {},
+          comments: { comments: [] },
+          testRuns: [],
+          errorMessage: "",
+          showErrors: false,
+          approvalPending: false,
+          replyDialog: false,
+          lgtm: false,
+          approve: false,
+          expandedTestRuns: [],
+          refreshing: false,
+          allowRefresh: true,
+        }, [[json .]]),
+        vuetify: new Vuetify(),
+        methods: {
+          Unix2Date: Unix2Date,
+          VersionName: function(index) {
+            if (index <= 0) {
+              return 'Base version';
+            }
+            var idx = index - 1;
+            if (index >= this.review.versions.length) {
+              idx = this.review.versions.length - 1;
+            }
+            var version = this.review.versions[index - 1];
+            var name = '#' + index + ' by ' + version.user + ' shelved in ' + version.change + ' on ' + Unix2Date(version.time);
+            if (index >= this.review.versions.length) {
+              name = 'Latest version (' + name + ')';
+            }
+            return name;
+          },
+          UpdateFiles: function() {
+            this.pairs = {}
+            for (var name in this.diffs) {
+              this.diffs[name] = null;
+            }
+            this.pairsLoading = true;
+            let base = this.base - 1;
+            let baseCl = 0;
+            let basePending = false;
+            if (base >= 0) {
+              baseCl = this.review.versions[base].change;
+              basePending = this.review.versions[base].pending;
+            }
+            let curr = this.curr - 1;
+            fetch('/ebert/pairs?base=' + baseCl +
+                  '&curr=' + this.review.versions[curr].change +
+                  '&basePending=' + basePending +
+                  '&currPending=' + this.review.versions[curr].pending)
+              .then(function(res) {
+                if (!res.ok) {
+                  return res.text().then(msg => { throw msg });
+                }
+                return res.json();
+              }).then(function(pairs) {
+                app.pairs = pairs;
+                for (var name in pairs) {
+                  Vue.set(app.diffs, name, null);
+                }
+              }).catch(function(error) {
+                console.log(error);
+                app.ShowError(error);
+              }).finally(() => (app.pairsLoading = false));
+          },
+          UpdateBase(newBase) {
+            this.base = newBase;
+            this.UpdateFiles();
+          },
+          UpdateCurr(newCurr) {
+            this.curr = newCurr;
+            this.UpdateFiles();
+          },
+          UpdateComment: function(comment) {
+            let comments = this.comments.comments;
+            let i = comments.findIndex(x => x.id == comment.id);
+            if (i < 0) {
+              comments.push(comment);
+              Vue.set(this.comments, 'comments', comments);
+            } else {
+              Vue.set(this.comments.comments, i, comment);
+            }
+          },
+          UpdateComments: function(collection) {
+            // This function may be called with a comment collection
+            // or with a single comment.  Figure out which and dispatch
+            // accordingly.
+            try {
+              if (!collection.comments && collection.id) {
+                this.UpdateComment(collection);
+                return;
+              }
+              
+              for (let comment of collection.comments) {
+                this.UpdateComment(comment);
+              }
+              if (collection.drafts) {
+                let comments = this.comments.comments;
+                for (let draft of collection.drafts) {
+                  let i = comments.findIndex(x => x.id == draft);
+                  if (i >= 0) {
+                    comments.splice(i, 1);
+                  }
+                }
+                Vue.set(this.comments, 'comments', comments);
+              }
+            } finally {
+              this.RefreshReview();
+            }
+          },
+          RefreshComments() {
+            fetch('/ebert/comments/' + this.review.id)
+              .then(function(res) {
+                if (!res.ok) {
+                  return res.text().then(msg => {
+                    throw msg;
+                  });
+                }
+                return res.json();
+              }).then(function(response) {
+                if (!response.comments) {
+                  response.comments = [];
+                }
+                app.comments = response;
+              }).catch(function(error) {
+                app.ShowError(error);
+              });
+          },
+          UpdateDiffs(name) {
+            // Retrieve new file diff(s) and update model.
+            if (name &&
+                !this.diffs[name] &&
+                !this.loadingDiffs[name]) {
+              Vue.set(this.loadingDiffs, name, true);
+              fetch('/ebert/diff?from=' +
+                    encodeURIComponent(this.pairs[name].From) +
+                    '&to=' +
+                    encodeURIComponent(this.pairs[name].To) +
+                    '&fileType=' +
+                    encodeURIComponent(this.pairs[name].FileType) +
+                    '&action=' +
+                    encodeURIComponent(this.pairs[name].Action))
+                .then(function(res) {
+                  if (!res.ok) {
+                    return res.text().then(msg => { throw msg });
+                  }
+                  return res.json();
+                }).then(function (diffs) {
+                  Vue.set(app.diffs, name, diffs.response);
+                }).catch(function (error) {
+                  app.ShowError(error);
+                }).finally(() => (Vue.set(app.loadingDiffs, name, false)));
+            }
+          },
+          EditingReview(editing) {
+            if (editing) {
+              // Suppress refresh while editing.
+              this.allowRefresh = false;
+            } else {
+              // Enable refresh when done editing.
+              this.allowRefresh = true;
+            }
+          },
+          UpdateReview: function(review) {
+            app.review = review;
+          },
+          RefreshReview() {
+            this.refreshing++;
+            return fetch(`/ebert/review/${this.review.id}`)
+              .then(function(res) {
+                if (!res.ok) {
+                  return res.text().then(msg => { throw msg });
+                }
+                return res.json();
+              }).then(review => {
+                this.UpdateReview(review);
+              }).catch(error => {
+                this.ShowError(error);
+              }).finally(() => {
+                this.refreshing--;
+                if (this.refreshing <= 0) {
+                  this.refreshing = 0;
+                }
+              });
+          },
+          MaybeRefreshReview() {
+            if (this.allowRefresh && this.refreshing <= 0) {
+              this.RefreshReview().finally(() => {
+                this.RefreshComments();
+              });
+            }
+          },
+          IsLoading: function(name) {
+            return this.loadingDiffs[name];
+          },
+          IsText: function(diffs) {
+            return !this.IsImage(diffs);
+          },
+          IsImage: function(diffs) {
+            return diffs.from || diffs.to;
+          },
+          NumComments: function(name) {
+            if (this.threadedComments[name]) {
+              return this.threadedComments[name].filter(x => !x.resolved).length;
+            }
+            return -1;
+          },
+          CanLGTM(user) {
+            // User's can't LGTM their own review.
+            return user != this.review.author;
+          },
+          CanApprove(user) {
+            // User's can't approve their own review.
+            if (user == this.review.author) {
+              return false;
+            }
+            // Nobody can approve until all of the required reviewers
+            // have LGTM'd.  If the user is a required reviewer, we
+            // assume they have LGTM'd since that will happen
+            // automatically if they approve.
+            const participants = this.review.participants || {};
+            user = participants[user];
+            for (const participant in this.review.participants) {
+              if (participant.required && participant != user &&
+                  (!participant.vote.value || participant.vote.value < 1)) {
+                return false;
+              }        
+            }
+            return true;
+          },
+          LGTM() {
+            fetch(`/ebert/comments/${this.review.id}?publish=true`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ lgtm: true }),
+            }).then(function(res) {
+              if (!res.ok) {
+                return res.text().then(msg => { throw msg });
+              }
+              return res.json();
+            }).then(function(value) {
+              if (app.CanApprove(app.user)) {
+                app.review.participants[app.user].vote.value = 1;
+              }
+            }).catch(function(error) {
+              app.ShowError(error);
+            });
+          },
+          Approve: function() {
+            this.approvalPending = true;
+            fetch(`/ebert/approve/${this.review.id}`)
+              .then(function(res) {
+                if (!res.ok) {
+                  return res.text().then(msg => { throw msg });
+                }
+                return res.json();
+              }).then(function(json) {
+                Vue.set(app.review, 'state', json.state);
+              }).catch(function (error) {
+                app.ShowError(error);
+              }).finally(function() {
+                app.approvalPending = false;
+              });
+          },
+          RunTests() {
+            if (!this.review || !this.review.versions) {
+              return;
+            }
+            let version = this.review.versions.length;
+            fetch(`/ebert/testruns/${this.review.id}?version=${version}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }).then(function(res) {
+              if (!res.ok) {
+                return res.text().then(msg => { throw msg; });
+              }
+              return res.json();
+            }).then(function(testRun) {
+              testRun['version'] = version;
+              let idx = app.testRuns.findIndex(x => x.version == version);
+              if (idx < 0) {
+                idx = 0;
+              }
+              app.testRuns.splice(idx, 0, testRun);
+            }).catch(function(error) {
+              app.ShowError(error);
+            });
+          },
+          UpdateTestRun(version) {
+            fetch(`/ebert/testruns/${this.review.id}?version=${version}`)
+              .then(function(res) {
+                if (!res.ok) {
+                  return res.text().then(msg => { throw msg; });
+                }
+                return res.json();
+              }).then(function(testRuns) {
+                if (!testRuns) {
+                  testRuns = [];
+                } else {
+                  testRuns = Object.values(testRuns);
+                }
+                testRuns = testRuns.map(x => Object.assign({}, x, {
+                  version: version,
+                }));
+                let next = app.testRuns.findIndex(x => x.version < version);
+                if (next < 0) {
+                  next = app.testRuns.length;
+                }
+                let start = app.testRuns.findIndex(x => x.version == version);
+                if (start >= 0) {
+                  app.testRuns.splice(start, next - start);
+                  next = start;
+                }
+                app.testRuns.splice(next, 0, ...testRuns);
+                // Auto-refresh pending test-runs.
+                for (let run of testRuns) {
+                  if (run.status == "running") {
+                    setTimeout(function() {
+                      app.UpdateTestRun(version);
+                    }, 15000);
+                    break;
+                  }
+                }
+              }).catch(function(error) {
+                app.ShowError(error);
+              });
+          },
+          UpdateTestRuns(version) {
+            if (!this.review || !this.review.versions) {
+              return;
+            }
+            // TestRun versions are numbered starting at 1.
+            if (version <= 0 || version > this.review.versions.length) {
+              version = this.review.versions.length;
+            }
+            let versions = this.review.versions;
+            let commits = this.review.commits || [];
+            // The testRun for a committed version is never completed
+            // so don't bother asking for it.
+            while (version > 1 &&
+                   commits.indexOf(versions[version-1].change) >= 0) {
+              version = version - 1;
+            }
+            if (!versions[version-1].testRuns ||
+                versions[version-1].testRuns.length == 0) {
+              return;
+            }
+            while (version > 0) {
+              this.UpdateTestRun(version);
+              version--;
+            }
+          },
+          TestRunToColor(status) {
+            if (status == "pass") {
+              return "green";
+            } else if (status == "fail") {
+              return "red";
+            }
+            return "blue";
+          },
+          TestRunToIcon(status) {
+            if (status == "pass") {
+              return "mdi-check";
+            } else if (status == "fail") {
+              return "mdi-alert";
+            }
+            return "mdi-sync";
+          },
+          ReplyRequestBuilder: function() {
+            let self = this;
+            return function(req) {
+              return Object.assign({}, req, {
+                lgtm: self.lgtm,
+                approve: self.approve,
+              });
+            };
+          },
+          ShowError: function(error) {
+            if (error instanceof Error) {
+              this.errorMessage = `Javascript Error: ${error.message}`;
+            } else if (error.response && error.response.data) {
+              this.errorMessage = "Server Error: " +
+                JSON.stringify(error.response.data);
+            } else {
+              this.errorMessage = JSON.stringify(error);
+            }
+            console.log(`ShowError: '${this.errorMessage}'`);
+            console.trace();
+            this.showErrors = true
+          },
+        },
+        computed: {
+          statusColor: function() {
+            if (this.review.commits.length > 0) {
+              return "grey";
+            } else if (this.review.state == "approved") {
+              return "green";
+            } else {
+              return "amber";
+            }
+          },
+          statusText: function() {
+            if (this.review.commits.length > 0) {
+              return `committed as ${this.review.commits.join(', ')}`;
+            }
+            return `(version ${this.curr} of ${this.review.versions.length})`;
+          },
+          testRunColor: function() {
+            // This function assumes that testRuns are ordered from
+            // newest to oldest, so we check the most recent test run.
+            if (this.testRuns && this.testRuns.length > 0) {
+              return this.TestRunToColor(this.testRuns[0].status);
+            }
+            return "amber";
+          },
+          testRunBadge: function() {
+            // This function assumes that testRuns are ordered from
+            // newest to oldest, so we check the most recent test run.
+            if (this.testRuns && this.testRuns.length > 0) {
+              return this.TestRunToIcon(this.testRuns[0].status);
+            }
+            return "sync_problem";
+          },
+          testRunHeaders: function() {
+            return [{
+              text: 'Status',
+              align: 'start',
+              sortable: false,
+              value: 'status',
+            }, {
+              text: 'Version',
+              sortable: false,
+              value: 'version',
+            }, {
+              text: 'Started',
+              sortable: false,
+              value: 'started',
+            }, {
+              text: 'Completed',
+              sortable: false,
+              value: 'completed',
+            }, {
+              text: '',
+              value: 'data-table-expand',
+            }];
+          },
+          testRunItems: function() {
+            let testruns = this.testRuns.map(function (x) {
+              return {
+                id: `${x.version}:${x.startTime}`,
+                status: x.status,
+                version: x.version,
+                started: Unix2Date(x.startTime),
+                completed: Unix2Date(x.completedTime),
+                url: x.url,
+              };
+            });
+            testruns.sort(function (a, b) {
+              if (a.version != b.version) {
+                return -(a.version - b.version);
+              }
+              return -(a.startTime - b.startTime);
+            });
+            return testruns;
+          },
+          baseVersions: function() {
+            return [...Array(this.curr).keys()].map(i => ({
+              "index": i,
+              "description": this.VersionName(i),
+            }));
+          },
+          currVersions: function() {
+            var len = this.curr - this.base;
+            if (this.review) {
+              len = this.review.versions.length - this.base;
+            }
+            len = len + 1;
+            versions = [...Array(len).keys()].map(i => ({
+              "index": i + this.base,
+              "description": this.VersionName(i + this.base),
+            }));
+            versions[0].divider = true;
+            return versions;
+          },
+          threadedComments() {
+            let comments = (this.comments.comments || []).sort(function(a, b) {
+              if (a.id >= 0) {
+                if (b.id >= 0) {
+                  return a.id - b.id;
+                }
+                return -1;
+              } else {
+                if (b.id < 0) {
+                  return b.id - a.id;
+                }
+                return 1;
+              }
+            });
+            const byId = {};
+            for (const c of comments) {
+              byId[c.id] = {
+                comment: c,
+                children: [],
+                parent: null,
+                resolved: (c.flags || []).indexOf('resolved') >= 0,
+                read: (c.id >= 0) && ((c.readBy || []).indexOf(this.user) >= 0),
+                context: Object.assign({}, { comment: 0, file: "" }, c.context),
+              };
+            }
+            for (const c of comments) {
+              if (c.context.comment != 0) {
+                byId[c.id].parent = byId[c.context.comment];
+                byId[c.context.comment].children.push(byId[c.id]);
+              }
+            }
+            comments = comments.filter(c => c.context.comment == 0);
+            var byFile = {}
+            for (let c of comments) {
+              if (byFile[c.context.file]) {
+                byFile[c.context.file].push(byId[c.id]);
+              } else {
+                byFile[c.context.file] = [byId[c.id]];
+              }
+            }
+            
+            for (let name in byFile) {
+              byFile[name] = byFile[name].sort(function (a, b) {
+                return a.comment.time - b.comment.time;
+              });
+              byFile[name].map(annotateComments);
+            }
+            return byFile;
+          },
+          clComments() {
+            if (this.threadedComments) {
+              let sorted = Object.values(this.threadedComments).flat()
+                  .sort( function(a, b) {
+                    return a.comment.time - b.comment.time;
+                  });
+              return sorted;
+            }
+            return [];
+          },
+          draftComments() {
+            const hasDrafts = function(ci) {
+              if (ci.comment.id < 0) {
+                return true;
+              }
+              for (const child of ci.children) {
+                if (hasDrafts(child)) {
+                  return true;
+                }
+              }
+              return false;
+            };
+            let drafts = [];
+            for (const [id, comments] of Object.entries(this.threadedComments)) {
+              for (const c of comments) {
+                if (hasDrafts(c)) {
+                  drafts.push(c);
+                }
+              }
+            }
+            return drafts;
+          },
+          orderedPairs() {
+            // Returns array of files in order.
+            let pairs = [];
+            let files = Object.keys(this.pairs).sort();
+            for (const file of files) {
+              pairs.push(Object.assign({}, {
+                name: file,
+              }, this.pairs[file]));
+            }
+            return pairs;
+          },
+        },
+        created: function() {
+          this.editedDescription = "t6";//this.review.description;
+          this.RefreshComments();
+          this.UpdateTestRuns(0);
+          // Update the review every 30s when the page is visible.
+          // Will also update comments.
+          if (document.visibilityState === 'visible') {
+            this.interval = setInterval(this.MaybeRefreshReview, 30000);
+          }
+          let self = this;
+          document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+              if (!self.interval) {
+                self.MaybeRefreshReview();
+                self.interval = setInterval(self.MaybeRefreshReview, 30000);
+              }
+            } else {
+              if (self.interval) {
+                clearInterval(self.interval);
+                self.interval = null;
+              }
+            }
+          });
+        },
+      })
+    </script>
+  </body>
+</html>

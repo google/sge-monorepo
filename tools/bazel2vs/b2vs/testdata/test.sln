@@ -1,0 +1,48 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 16
+VisualStudioVersion = 16.0.30309.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_a", "experimental\users\bazel-guy\hellobazel\app_a.vcxproj", "{780F6DBE-E209-50BB-7173-47225629000B}"\nEndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "my_lib", "experimental\users\bazel-guy\hellobazel\my_lib.vcxproj", "{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}"\nEndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		FastBuild|x64 = FastBuild|x64
+		FastBuild|linux = FastBuild|linux
+		Debug|x64 = Debug|x64
+		Debug|linux = Debug|linux
+		Release|x64 = Release|x64
+		Release|linux = Release|linux
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{780F6DBE-E209-50BB-7173-47225629000B}.FastBuild|x64.ActiveCfg = FastBuild|x64
+		{780F6DBE-E209-50BB-7173-47225629000B}.FastBuild|x64.Build.0 = FastBuild|x64
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.FastBuild|x64.ActiveCfg = FastBuild|x64
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.FastBuild|x64.Build.0 = FastBuild|x64
+		{780F6DBE-E209-50BB-7173-47225629000B}.FastBuild|linux.ActiveCfg = FastBuild|linux
+		{780F6DBE-E209-50BB-7173-47225629000B}.FastBuild|linux.Build.0 = FastBuild|linux
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.FastBuild|linux.ActiveCfg = FastBuild|linux
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.FastBuild|linux.Build.0 = FastBuild|linux
+		{780F6DBE-E209-50BB-7173-47225629000B}.Debug|x64.ActiveCfg = Debug|x64
+		{780F6DBE-E209-50BB-7173-47225629000B}.Debug|x64.Build.0 = Debug|x64
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Debug|x64.ActiveCfg = Debug|x64
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Debug|x64.Build.0 = Debug|x64
+		{780F6DBE-E209-50BB-7173-47225629000B}.Debug|linux.ActiveCfg = Debug|linux
+		{780F6DBE-E209-50BB-7173-47225629000B}.Debug|linux.Build.0 = Debug|linux
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Debug|linux.ActiveCfg = Debug|linux
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Debug|linux.Build.0 = Debug|linux
+		{780F6DBE-E209-50BB-7173-47225629000B}.Release|x64.ActiveCfg = Release|x64
+		{780F6DBE-E209-50BB-7173-47225629000B}.Release|x64.Build.0 = Release|x64
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Release|x64.ActiveCfg = Release|x64
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Release|x64.Build.0 = Release|x64
+		{780F6DBE-E209-50BB-7173-47225629000B}.Release|linux.ActiveCfg = Release|linux
+		{780F6DBE-E209-50BB-7173-47225629000B}.Release|linux.Build.0 = Release|linux
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Release|linux.ActiveCfg = Release|linux
+		{CAF8F6D0-01CD-50E3-6AA8-979073C781B5}.Release|linux.Build.0 = Release|linux
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2EE839B1-E1C6-5801-51C7-CC5E78A75E03}
+	EndGlobalSection
+EndGlobal

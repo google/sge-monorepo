@@ -1,0 +1,29 @@
+cc {
+  quote_include_dirs: "."
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin"
+  quote_include_dirs: "external/bazel_tools"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/bazel_tools"
+}
+deps: "//experimental/users/bazel-guy/hellobazel:my_lib"
+files {
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/bazel-guy/hellobazel/app_a.cpp"
+    root_path: ""
+    short_path: "experimental/users/bazel-guy/hellobazel/app_a.cpp"
+  }
+}
+kind: "cc_binary"
+label {
+  label: "//experimental/users/bazel-guy/hellobazel:app_a"
+  name: "app_a"
+  pkg: "experimental/users/bazel-guy/hellobazel"
+  workspace_name: ""
+  workspace_root: ""
+}
+outputs {
+  owner_workspace_name: ""
+  path: "bazel-out/x64_windows-fastbuild/bin/experimental/users/bazel-guy/hellobazel/app_a.exe"
+  root_path: "bazel-out/x64_windows-fastbuild/bin"
+  short_path: "experimental/users/bazel-guy/hellobazel/app_a.exe"
+}

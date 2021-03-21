@@ -1,0 +1,21 @@
+build_unit {
+  name: "dummy"
+  target: ":dummy"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":dummy"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":dummy"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=dummy"
+  args: "-out_dir=//build/cicd/cirunner/runners/publish_runner/dummy"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}

@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "swarmlib",
+    srcs = [
+        "swarmbackend.go",
+        "swarmlib.go",
+    ],
+    importpath = "libs/go/swarmlib",
+    visibility = ["//visibility:public"],
+    deps = ["//libs/go/log"],
+)

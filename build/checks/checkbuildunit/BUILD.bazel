@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "checkbuildunit_lib",
+    srcs = ["checkbuildunit.go"],
+    importpath = "sge-monorepo/build/checks/checkbuildunit",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/monorepo",
+        "//build/cicd/presubmit/check",
+        "//build/cicd/presubmit/check/protos:check_go_proto",
+        "//build/cicd/sgeb/build",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//libs/go/log",
+    ],
+)
+
+go_binary(
+    name = "checkbuildunit",
+    embed = [":checkbuildunit_lib"],
+    visibility = ["//visibility:public"],
+)

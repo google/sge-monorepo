@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "browse",
+    srcs = ["browse.go"],
+    importpath = "sge-monorepo/tools/ebert/handlers/browse",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libs/go/p4lib",
+        "//tools/ebert/ebert",
+    ],
+)

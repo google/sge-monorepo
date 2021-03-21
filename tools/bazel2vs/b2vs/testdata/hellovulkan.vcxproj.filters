@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <ClCompile Include="D:\P4\sge\experimental\users\graphics-guy\hellovulkan\src\BitmapImage.cpp"><Filter>src</Filter></ClCompile>
+    <ClCompile Include="D:\P4\sge\experimental\users\graphics-guy\hellovulkan\src\BitmapImage.h"><Filter>src</Filter></ClCompile>
+    <ClCompile Include="D:\P4\sge\experimental\users\graphics-guy\hellovulkan\src\FileSystem.h"><Filter>src</Filter></ClCompile>
+    <ClCompile Include="D:\P4\sge\experimental\users\graphics-guy\hellovulkan\src\VkUtil.c"><Filter>src</Filter></ClCompile>
+    <ClCompile Include="D:\P4\sge\experimental\users\graphics-guy\hellovulkan\src\VkUtil.h"><Filter>src</Filter></ClCompile>
+    <ClCompile Include="D:\P4\sge\experimental\users\graphics-guy\hellovulkan\src\main.cpp"><Filter>src</Filter></ClCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{34EF91A0-2E99-5173-793B-60637269E146}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+test_suite {
+  name: "tests"
+  test_unit: "..."
+}
+
+publish_unit {
+  name: "sgeb_and_sgep"
+  build_unit: "//build/cicd/sgeb"
+  build_unit: "//build/cicd/sgep"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=sgeb and sgep"
+  args: "-out_dir=//bin/windows"
+}

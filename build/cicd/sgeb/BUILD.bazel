@@ -1,0 +1,30 @@
+load("//libs/bzl/build_test:build_test.bzl", "build_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+# gazelle:exclude vendor
+
+go_library(
+    name = "sgeb_lib",
+    srcs = [
+        "remote.go",
+        "sgeb.go",
+    ],
+    importpath = "sge-monorepo/build/cicd/sgeb",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//build/cicd/cirunner/runners/unit_runner/protos:unit_runnerpb_go_proto",
+        "//build/cicd/jenkins",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/build",
+        "//libs/go/log",
+        "//libs/go/p4lib",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "sgeb",
+    embed = [":sgeb_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,11 @@
+build_unit {
+  name: "gcs_publisher"
+  target: ":gcs_publisher"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":gcs_publisher"
+}
+

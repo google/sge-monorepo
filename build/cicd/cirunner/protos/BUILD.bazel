@@ -1,0 +1,30 @@
+# Exclude files generated for IDE support.
+# gazelle:exclude cirunnerpb
+
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "cirunner_proto",
+    srcs = [
+        "cirun.proto",
+        "credentials.proto",
+    ],
+    visibility = [
+        "//build/cicd/cirunner:__subpackages__",
+        "//tools/ebert:__subpackages__",
+    ],
+)
+
+go_proto_library(
+    name = "cirunner_go_proto",
+    importpath = "sge-monorepo/build/cicd/cirunner/protos/cirunnerpb",
+    proto = ":cirunner_proto",
+    visibility = [
+        "//build/cicd/cirunner:__subpackages__",
+        "//build/cicd/jenkins:__subpackages__",
+        "//build/cicd/sgeb:__subpackages__",
+        "//environment/envinstall:__subpackages__",
+        "//tools/ebert:__subpackages__",
+    ],
+)

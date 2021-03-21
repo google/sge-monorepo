@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "checkdesc_lib",
+    srcs = ["checkdesc.go"],
+    importpath = "sge-monorepo/build/checks/checkdesc",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/presubmit/check",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//libs/go/log",
+    ],
+)
+
+go_binary(
+    name = "checkdesc",
+    embed = [":checkdesc_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "checkdesc_test",
+    srcs = ["checkdesc_test.go"],
+    embed = [":checkdesc_lib"],
+    deps = [
+        "//build/cicd/presubmit/check/checkmock",
+        "//build/cicd/presubmit/check/protos:check_go_proto",
+        "//libs/go/sgetest",
+    ],
+)

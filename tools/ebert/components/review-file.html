@@ -1,0 +1,194 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template id='review-file-template'>
+  <v-expansion-panel
+    @change="MaybeScrollTo"
+    :id="id"
+    :key="name">
+    <v-expansion-panel-header
+      ripple
+      :class="{ sticky: expanded }">
+      <span>
+        <v-badge :color="actionColor"
+                 :icon="actionIcon"
+                 inline left>
+          {{name}}
+        </v-badge>
+        <v-badge v-if="comments"
+                 overlap
+                 :value="pendingComments.length"
+                 :content="pendingComments.length">
+          <v-icon>
+            mdi-comment-text
+          </v-icon>
+        </v-badge>
+      </span>
+    </v-expansion-panel-header>
+    <v-expansion-panel-content>
+      <v-row dense v-if="!diffs">
+        <v-col cols="6">
+          <v-skeleton-loader type="paragraph">
+          </v-skeleton-loader>
+        </v-col>
+        <v-col cols="6">
+          <v-skeleton-loader type="paragraph">
+          </v-skeleton-loader>
+      </v-row>
+      <template v-if="diffs">
+		<image-diff v-if="isImage"
+                    :name="name"
+                    :before="diffs.from"
+					:after="diffs.to">
+		</image-diff>
+        <text-diffs v-if="isText"
+                    :name="name"
+                    :diffs="diffs"
+                    :review-id="review">
+        </text-diffs>
+      </template>
+    </v-expansion-panel-content>
+  </v-expansion-panel>
+</template>
+
+<script src="/script/diff.js"></script>
+<script>Vue.component('review-file', {
+  template: '#review-file-template',
+  props: {
+    comments: Array,
+    expanded: Boolean,
+    latest: Number,
+    name: String,
+    pair: Object,
+    review: Number,
+  },
+  data() {
+    return {
+      fetched: {},
+    };
+  },
+  computed: {
+    actionColor() {
+      try {
+        switch(this.pair.Action) {
+        case 'edit':
+        case 'integrate':
+          return 'blue';
+        case 'add':
+        case 'add/move':
+        case 'move/add':
+        case 'branch':
+          return 'green';
+        case 'delete':
+        case 'delete/move':
+        case 'move/delete':
+          return 'red';
+        default:
+          throw 'unknown action';
+        }
+      } catch (e) {
+        return 'black';
+      }
+    },
+    actionIcon() {
+      try {
+        switch(this.pair.Action) {
+        case 'edit':
+          return 'mdi-pencil';
+        case 'integrate':
+          return 'mdi-arrow-left-right';
+        case 'add':
+        case 'add/move':
+        case 'move/add':
+          return 'mdi-plus-thick';
+        case 'branch':
+          return 'mdi-source-branch';
+        case 'delete':
+        case 'delete/move':
+        case 'move/delete':
+          return 'mdi-close';
+        default:
+          throw 'unknown action';
+        }
+      } catch (e) {
+        return 'mdi-help';
+      }
+    },
+    pendingComments() {
+      return (this.comments || []).filter(x => !x.resolved);
+    },
+    id() {
+      return `panel-${btoa(this.name)}`;
+    },
+    isText() {
+      return !this.isImage;
+    },
+    isImage() {
+      return this.diffs && (this.diffs.from || this.diffs.to);
+    },
+    key() {
+      // Because of the way swarm shelves review updates, we need to include
+      // the 'latest' version # (if truthy) when constructing the key.
+      return `${this.pair.From}:${this.pair.To}:${this.latest || ''}`;
+    },
+    diffs() {
+      let diffs = this.fetched[this.key];
+      if (diffs && !diffs.from && !diffs.to) {
+        // Text diff so do character level diffs & inline comments.
+        diffs = diffLines(this.name, diffs, this.pair, this.comments);
+      }
+      return diffs;
+    },
+  },
+  methods: {
+    MaybeScrollTo() {
+      if (this.expanded) {
+        const panel = document.getElementById(this.id);
+        const rect = panel.getBoundingClientRect();
+        // TODO(b/175302341): determine app bar height dynamically.
+        const appBarHeight = 64;
+        if (rect.top < appBarHeight) {
+          window.scrollBy(0, rect.top - appBarHeight);
+        }
+      }
+    },
+  },
+  watch: {
+    expanded(newval, oldval) {
+      const key = this.key;
+      if (newval && !this.fetched[key]) {
+        fetch('/ebert/diff?from=' +
+              encodeURIComponent(this.pair.From) +
+              '&to=' +
+              encodeURIComponent(this.pair.To) +
+              '&fileType=' +
+              encodeURIComponent(this.pair.FileType) +
+              '&action=' +
+              encodeURIComponent(this.pair.Action))
+          .then(function(res) {
+            if (!res.ok) {
+              return res.text().then(msg => { throw msg });
+            }
+            return res.json();
+          }).then((json) => {
+            Vue.set(this.fetched, key, json.response);
+          }).catch(function (error) {
+            app.ShowError(error);
+          });
+      }
+    },
+  },
+});</script>

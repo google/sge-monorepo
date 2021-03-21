@@ -1,0 +1,282 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package builddist
+
+//temp auth : execute "gcloud auth application-default login" before running the script
+
+import (
+	"compress/gzip"
+	"context"
+	"crypto/sha1"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"sync"
+
+	"cloud.google.com/go/datastore"
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/option"
+)
+
+func forEachFileToUpload(packageConfig *PackageConfig, callback func(srcPath string, dstPath string, info os.FileInfo) error) error {
+
+	//todo : move to json
+	var subfoldersToSkip = map[string]bool{
+		"linux": true,
+		"win32": true,
+		"mac":   true,
+	}
+
+	for _, folder := range packageConfig.Folders {
+		srcFolder := folder
+		for key, value := range packageConfig.Placeholders {
+			srcFolder = strings.ReplaceAll(srcFolder, key, value)
+		}
+		dstFolder := strings.ReplaceAll(folder, "%", "")
+
+		filepath.Walk(srcFolder, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				log.Printf("path %q received err: %s", path, err)
+				return err
+			}
+
+			//todo : file patterns to skip in json
+			if filepath.Ext(strings.ToLower(path)) == ".pdb" {
+				return nil
+			}
+
+			if info.IsDir() {
+				if _, shouldSkip := subfoldersToSkip[strings.ToLower(info.Name())]; shouldSkip {
+					return filepath.SkipDir
+				}
+			}
+			if info.IsDir() == false {
+				var relativePath, _ = filepath.Rel(srcFolder, path)
+				var destinationPath = filepath.Join(dstFolder, relativePath)
+				callback(path, destinationPath, info)
+			}
+			return nil
+		})
+	}
+	return nil
+}
+
+// getPerforceCurrentChangelist returns the current perforce changelist.
+//   todo : With build-dist becoming both a tool and a lib, we should remove this function
+//          because it is the only one depending on perforce explicitly.
+//          The caller should know which perforce version is being packaged
+func getPerforceCurrentChangelist() (string, error) {
+	fmt.Println("getting current perforce changelist")
+	cmd := exec.Command("p4", "changes", "-m1", "//...#have")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("error getting current perforce changelist: %v", err)
+	}
+	tokens := strings.Split(string(output), " ")
+	changelist := tokens[1]
+	fmt.Println("Changelist:", changelist)
+	return changelist, nil
+}
+
+func tryUploadPackageFileInBucket(
+	ctx context.Context,
+	authOption option.ClientOption,
+	bucketName string,
+	root string,
+	name string,
+	file *os.File,
+	onFileUploaded func()) error {
+
+	storageClient, err := storage.NewClient(ctx, authOption)
+	if err != nil {
+		return fmt.Errorf("storage.NewClient error: %v", err)
+	}
+	defer storageClient.Close()
+	bucket := storageClient.Bucket(bucketName)
+
+	objPath := strings.ReplaceAll(filepath.Join(root, name), "\\", "/")
+
+	uploadWriter := bucket.Object(objPath).NewWriter(ctx)
+
+	zipWriter := gzip.NewWriter(uploadWriter)
+
+	//error checking is done in Close() because Copy can be async
+	//https://godoc.org/cloud.google.com/go/storage#Writer.Close
+	if _, err := io.Copy(zipWriter, file); err != nil {
+		return fmt.Errorf("coudn't copy %s: %v", file.Name(), err)
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		return fmt.Errorf("couldn't close zip writer: %v", err)
+	}
+
+	if err := uploadWriter.Close(); err != nil {
+		return fmt.Errorf("couldn't close upload writer: %v", err)
+	}
+	onFileUploaded()
+	return nil
+}
+
+func uploadPackageFileInBucket(
+	ctx context.Context,
+	authOption option.ClientOption,
+	bucketName string,
+	root string,
+	name string,
+	file *os.File,
+	onFileUploaded func()) error {
+
+	err := tryUploadPackageFileInBucket(ctx, authOption, bucketName, root, name, file, onFileUploaded)
+	if err == nil {
+		return nil
+	}
+	log.Println("retrying ", name)
+	file.Seek(0, 0)
+	return tryUploadPackageFileInBucket(ctx, authOption, bucketName, root, name, file, onFileUploaded)
+}
+
+const fileEntryBatchSize = 250 //max is 500
+
+func recordBatchFileEntries(
+	ctx context.Context,
+	packageKey *datastore.Key,
+	datastoreClient *datastore.Client,
+	entryBatch []FileEntry) error {
+	if len(entryBatch) > fileEntryBatchSize {
+		return fmt.Errorf("recordBatchFileEntries: too many entries")
+	}
+	entryKeys := make([]*datastore.Key, 0, fileEntryBatchSize)
+	for i := 0; i < len(entryBatch); i++ {
+		//create array of incomplete keys, will be generated by the database
+		fileEntryKey := datastore.IncompleteKey(FileEntryKind, packageKey)
+		entryKeys = append(entryKeys, fileEntryKey)
+	}
+	if _, err := datastoreClient.PutMulti(ctx, entryKeys, entryBatch); err != nil {
+		return fmt.Errorf("Failed to save file entry: %v", err)
+	}
+	return nil
+}
+
+//
+// recordFileEntries : receives uploaded files in bucket (through fileEntries) and batches metadata
+//    writes to datastore
+//
+func recordFileEntries(
+	fileEntries chan FileEntry,
+	ctx context.Context,
+	packageKey *datastore.Key,
+	datastoreClient *datastore.Client,
+	done chan bool) {
+
+	entryBatch := make([]FileEntry, 0, fileEntryBatchSize)
+	for fileEntry := range fileEntries {
+		entryBatch = append(entryBatch, fileEntry)
+		if len(entryBatch) == fileEntryBatchSize {
+			recordBatchFileEntries(ctx, packageKey, datastoreClient, entryBatch)
+			entryBatch = entryBatch[:0]
+		}
+	}
+	recordBatchFileEntries(ctx, packageKey, datastoreClient, entryBatch)
+	done <- true
+}
+
+//
+// MakePackage : uploads local binaries into a new package. The version-id is determined
+//    by fetching the current perforce changelist.
+//
+func MakePackage(ctx context.Context, config PackageConfig, authOption option.ClientOption) error {
+	productKey := datastore.NameKey(ProductKind, config.ProductName, nil)
+	packageVersion, err := getPerforceCurrentChangelist()
+	if err != nil {
+		return err
+	}
+	packagePath := filepath.Join(config.ProductName, packageVersion)
+
+	datastoreClient, err := datastore.NewClient(ctx, config.GcpProject, authOption)
+	if err != nil {
+		return fmt.Errorf("Failed to create client: %v", err)
+	}
+
+	packageObj := PackageEntry{WritingeState, packageVersion}
+	packageKey := datastore.NameKey(PackageKind, packageVersion, productKey)
+	if _, err := datastoreClient.Put(ctx, packageKey, &packageObj); err != nil {
+		return fmt.Errorf("Failed to save package: %v", err)
+	}
+
+	fileEntries := make(chan FileEntry, 1024)
+	fileEntriesUploaded := make(chan bool)
+	go recordFileEntries(fileEntries, ctx, packageKey, datastoreClient, fileEntriesUploaded)
+
+	var totalSize int64 = 0
+	var wgFileUpload sync.WaitGroup
+
+	maxConcurrency := 10
+	concurrencyGuard := make(chan struct{}, maxConcurrency)
+
+	//
+	// this thread discovers the files to upload. Uploads are done in a seperate thread.
+	// Once uploaded, a file's metadata is queued for write in datastore.
+	//
+	err = forEachFileToUpload(&config, func(srcPath string, destinationPath string, info os.FileInfo) error {
+		file, err := os.Open(srcPath)
+		if err != nil {
+			return fmt.Errorf("failed to open %s: %v", srcPath, err)
+		}
+
+		h := sha1.New()
+		if _, err := io.Copy(h, file); err != nil {
+			return fmt.Errorf("failed to copy %s: %v", file.Name(), err)
+		}
+
+		fileHash := fmt.Sprintf("%x", h.Sum(nil))
+		file.Seek(0, 0)
+
+		onFileUploaded := func() {
+			entry := FileEntry{destinationPath, fileHash, nil}
+			fileEntries <- entry
+			file.Close()
+			log.Println(entry)
+			wgFileUpload.Done()
+			<-concurrencyGuard
+		}
+
+		concurrencyGuard <- struct{}{} //will block if too many tasks are in flight
+
+		wgFileUpload.Add(1)
+		go uploadPackageFileInBucket(ctx, authOption, config.BucketName, packagePath, destinationPath, file, onFileUploaded)
+
+		totalSize += info.Size()
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload all files: %v", err)
+	}
+	wgFileUpload.Wait()
+	close(fileEntries)
+	<-fileEntriesUploaded
+	packageObj.State = CompleteState
+	if _, err := datastoreClient.Put(ctx, packageKey, &packageObj); err != nil {
+		return fmt.Errorf("failed to save package: %v", err)
+	}
+
+	fmt.Printf("total size: %.3v GB\n", float64(totalSize)/(1024*1024*1024.0))
+	fmt.Println("Done.")
+
+	return nil
+}

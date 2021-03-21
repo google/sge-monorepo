@@ -1,0 +1,28 @@
+build_unit {
+  name: "remove_empty_directories"
+  target: ":remove_empty_directories"
+  args: "--config=windows"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "remove_empty_directories_bin"
+  build_unit: "//tools/remove_empty_directories"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=remove_empty_directories"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":remove_empty_directories"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

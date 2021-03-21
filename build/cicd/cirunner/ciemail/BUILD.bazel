@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "ciemail",
+    srcs = [
+        "ciemail.go",
+        "presubmit_email.go",
+    ],
+    importpath = "sge-monorepo/build/cicd/cirunner/ciemail",
+    visibility = ["//build/cicd/cirunner:__subpackages__"],
+    deps = [
+        "//build/cicd/cirunner/css",
+        "//build/cicd/presubmit",
+        "//build/cicd/presubmit/protos:presubmit_go_proto",
+        "//libs/go/email",
+        "@com_github_julvo_htmlgo//:htmlgo",
+        "@com_github_julvo_htmlgo//attributes",
+    ],
+)

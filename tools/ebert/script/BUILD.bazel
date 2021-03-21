@@ -1,0 +1,5 @@
+filegroup(
+    name = "script",
+    srcs = glob(["*.js"]),
+    visibility = ["//tools/ebert/pages:__pkg__"],
+)

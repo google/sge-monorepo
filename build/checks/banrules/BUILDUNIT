@@ -1,0 +1,10 @@
+build_unit {
+  name: "banrules"
+  target: ":banrules"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "banrules_build_test"
+  build_unit: ":banrules"
+}

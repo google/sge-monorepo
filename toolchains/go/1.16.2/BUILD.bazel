@@ -1,0 +1,128 @@
+# This file must be next to a Go 1.16.2 installation.
+
+load("@io_bazel_rules_go//go/private:rules/binary.bzl", "go_tool_binary")
+load("@io_bazel_rules_go//go/private:rules/sdk.bzl", "package_list")
+load("@io_bazel_rules_go//go:def.bzl", "go_sdk", "go_toolchain")
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "headers",
+    srcs = glob(["pkg/include/*.h"]),
+)
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["src/**"]),
+)
+
+filegroup(
+    name = "tools",
+    srcs = glob([
+        "pkg/tool/**",
+        "bin/gofmt*",
+    ]),
+)
+
+filegroup(
+    name = "files",
+    srcs = glob([
+        "bin/go*",
+        "src/**",
+        "pkg/**",
+    ]),
+)
+
+# TODO: Gazelle depends on this file directly. This dependency
+# should be broken, and this rule should be folded into go_sdk.
+package_list(
+    name = "package_list",
+    srcs = [":srcs"],
+    out = "packages.txt",
+    root_file = "ROOT",
+)
+
+filegroup(
+    name = "libs_windows",
+    srcs = glob(
+        ["pkg/windows_amd64/**/*.a"],
+        exclude = ["pkg/windows_amd64/**/cmd/**"],
+    ),
+)
+
+go_sdk(
+    name = "go_sdk_windows",
+    srcs = [":srcs"],
+    go = "bin/go.exe",
+    goarch = "amd64",
+    goos = "windows",
+    headers = [":headers"],
+    libs = [":libs_windows"],
+    package_list = ":package_list",
+    root_file = "ROOT",
+    tools = [":tools"],
+)
+
+go_tool_binary(
+    name = "builder_windows",
+    srcs = ["@io_bazel_rules_go//go/tools/builders:builder_srcs"],
+    sdk = ":go_sdk_windows",
+)
+
+go_toolchain(
+    name = "go_windows_toolchain_impl",
+    builder = ":builder_windows",
+    cgo_link_flags = [],
+    goarch = "amd64",
+    goos = "windows",
+    link_flags = [],
+    sdk = ":go_sdk_windows",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+toolchain(
+    name = "go_windows_toolchain",
+    exec_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+        "@toolchains//go:1.16.2",
+        "//platforms/windows_abi:msvc"
+    ],
+    toolchain = ":go_windows_toolchain_impl",
+    toolchain_type = "@io_bazel_rules_go//go:toolchain",
+)
+
+# Same as above but here to have a different toolchain name displayed
+# during resolution
+go_toolchain(
+    name = "go_windows_gnu_toolchain_impl",
+    builder = ":builder_windows",
+    cgo_link_flags = [],
+    goarch = "amd64",
+    goos = "windows",
+    link_flags = [],
+    sdk = ":go_sdk_windows",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+toolchain(
+    name = "go_windows_gnu_toolchain",
+    exec_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+        "@toolchains//go:1.16.2",
+        "//platforms/windows_abi:gnu",
+    ],
+    toolchain = ":go_windows_gnu_toolchain_impl",
+    toolchain_type = "@io_bazel_rules_go//go:toolchain",
+)

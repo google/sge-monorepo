@@ -1,0 +1,50 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "postsubmit_runner_lib",
+    srcs = ["postsubmit_runner.go"],
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/postsubmit_runner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/runners/postsubmit_runner/protos:postsubmitpb_go_proto",
+        "//build/cicd/cirunner/runners/unit_runner/protos:unit_runnerpb_go_proto",
+        "//build/cicd/cirunner/runnertool",
+        "//build/cicd/jenkins",
+        "//build/cicd/monorepo",
+        "//build/cicd/monorepo/p4path",
+        "//build/cicd/sgeb/build",
+        "//build/cicd/sgeb/protos:sgeb_go_proto",
+        "//environment/envinstall",
+        "//libs/go/clock",
+        "//libs/go/email",
+        "//libs/go/log",
+        "//libs/go/p4lib",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@com_github_nu7hatch_gouuid//:gouuid",
+        "@io_bazel_rules_go//proto/wkt:timestamp_go_proto",
+    ],
+)
+
+go_binary(
+    name = "postsubmit_runner",
+    embed = [":postsubmit_runner_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "postsubmit_runner_test",
+    srcs = ["postsubmit_runner_test.go"],
+    embed = [":postsubmit_runner_lib"],
+    deps = [
+        "//build/cicd/cirunner/runners/postsubmit_runner/protos:postsubmitpb_go_proto",
+        "//build/cicd/cirunner/runners/unit_runner/protos:unit_runnerpb_go_proto",
+        "//build/cicd/jenkins/mockjenkins",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/protos:sgeb_go_proto",
+        "//libs/go/clock/mockclock",
+        "//libs/go/email/mockemail",
+        "//libs/go/p4lib",
+        "//libs/go/p4lib/p4mock",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)

@@ -1,0 +1,24 @@
+licenses {
+  type: "NOTICE"
+  name: "mit"
+  key_phrases: "MIT License"
+}
+licenses {
+  type: "NOTICE"
+  name: "bsd-2-clause"
+  key_phrases: "Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+  key_phrases: "Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution."
+}
+licenses {
+  type: "NOTICE"
+  name: "bsd-3-clause"
+  key_phrases: "Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer."
+  key_phrases: "Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution."
+  key_phrases: "nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission."
+}
+licenses {
+  type: "NOTICE"
+  name: "apache-2.0"
+  key_phrases: "Apache License"
+  key_phrases: "Version 2.0"
+}

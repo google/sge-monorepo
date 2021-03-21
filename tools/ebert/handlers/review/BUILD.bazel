@@ -1,0 +1,29 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "review",
+    srcs = ["review.go"],
+    importpath = "sge-monorepo/tools/ebert/handlers/review",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//libs/go/log",
+        "//libs/go/p4lib",
+        "//libs/go/swarm",
+        "//tools/ebert/diff",
+        "//tools/ebert/ebert",
+    ],
+)
+
+go_test(
+    name = "review_test",
+    srcs = ["review_test.go"],
+    embed = [":review"],
+    deps = [
+        "//libs/go/p4lib",
+        "//libs/go/p4lib/p4mock",
+        "//tools/ebert/ebert",
+        "@com_github_google_go_cmp//cmp",
+        "@com_github_google_go_cmp//cmp/cmpopts",
+    ],
+)

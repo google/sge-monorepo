@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@//libs/bzl/build_test:build_test.bzl", "build_test")
+
+go_library(
+    name = "prewarm_runner_lib",
+    srcs = ["prewarm_runner.go"],
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/prewarm_runner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/runnertool",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/build",
+        "@com_github_golang_glog//:glog",
+    ],
+)
+
+go_binary(
+    name = "prewarm_runner",
+    embed = [":prewarm_runner_lib"],
+    visibility = ["//visibility:public"],
+)

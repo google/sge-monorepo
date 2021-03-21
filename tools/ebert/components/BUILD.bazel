@@ -1,0 +1,5 @@
+filegroup(
+    name = "components",
+    srcs = glob(["*.html"]),
+    visibility = ["//tools/ebert/pages:__pkg__"],
+)

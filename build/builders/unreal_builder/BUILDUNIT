@@ -1,0 +1,15 @@
+build_unit {
+  name: "unreal_builder"
+  target: ":unreal_builder"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":unreal_builder"
+}
+
+test_suite {
+  name: "test"
+  test_unit: "..."
+}

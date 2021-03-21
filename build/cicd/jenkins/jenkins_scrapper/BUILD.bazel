@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_binary(
+    name = "jenkins_scrapper",
+    embed = [":jenkins_scrapper_lib"],
+    importpath = "sge-monorepo/build/cicd/jenkins/jenkins_scrapper",
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "jenkins_scrapper_lib",
+    srcs = ["jenkins_scrapper.go"],
+    importpath = "sge-monorepo/build/cicd/jenkins/jenkins_scrapper",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//build/cicd/jenkins",
+        "//libs/go/files",
+    ],
+)

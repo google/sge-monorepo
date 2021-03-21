@@ -1,0 +1,34 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "package_builder_lib",
+    srcs = ["package_builder.go"],
+    importpath = "sge-monorepo/build/builders/package_builder",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/monorepo",
+        "//build/cicd/monorepo/p4path",
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//build/packagemanifest",
+        "//libs/go/log",
+        "//libs/go/sgeflag",
+    ],
+)
+
+go_binary(
+    name = "package_builder",
+    embed = [":package_builder_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "package_builder_test",
+    srcs = ["package_builder_test.go"],
+    embed = [":package_builder_lib"],
+    deps = [
+        "//build/cicd/monorepo",
+        "//libs/go/sgetest",
+        "@com_github_google_go_cmp//cmp",
+    ],
+)

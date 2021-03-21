@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "comments",
+    srcs = ["comments.go"],
+    importpath = "sge-monorepo/tools/ebert/handlers/comments",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libs/go/log",
+        "//libs/go/p4lib",
+        "//libs/go/swarm",
+        "//tools/ebert/ebert",
+    ],
+)

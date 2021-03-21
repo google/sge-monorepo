@@ -1,0 +1,16 @@
+build_unit {
+  name: "unit_runner"
+  target: ":unit_runner"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":unit_runner"
+}
+
+publish_unit {
+  name: "test_publish"
+  build_unit: ":unit_runner"
+  bin: "//build/publishers/test_publisher"
+}

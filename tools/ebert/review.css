@@ -1,0 +1,227 @@
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "/common.css";
+
+.jenkins {
+  width: 100%;
+  height: 50vh;
+}
+.comment-context {
+    background: white;
+}
+.description-white-bg {
+  background-color: white;
+}
+.theme--light.v-card.comment-resolved-odd {
+  background-color: #e1e1e1;
+}
+.theme--light.v-card.comment-odd {
+  background-color: #fceec7;
+}
+.theme--light.v-sheet.comment-resolved-odd {
+  background-color: #e1e1e1;
+}
+.theme--light.v-sheet.comment-odd {
+  background-color: #fceec7;
+}
+.theme--light.v-card.comment-resolved-even {
+  background-color: whitesmoke;
+}
+.theme--light.v-card.comment-even {
+  background-color: #fef7e0;
+}
+.theme--light.v-sheet.comment-resolved-even {
+  background-color: whitesmoke;
+}
+.theme--light.v-sheet.comment-even {
+  background-color: #fef7e0;
+}
+.comment-header {
+  background: white;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  font-weight: bold;
+  justify-content: left;
+}
+.comment {
+  white-space: pre-wrap;
+}
+.comment-summary {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+    font-weight: normal;
+    font-style: italic;
+}
+.add-comment {
+  width: 100%;
+  white-space: pre-wrap;
+  font-family: monospace;
+}
+.show-more-left {
+  border-collapse: collapse;
+  border: 1px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-right: 4px;
+  text-align: left;
+  vertical-align: text-top;
+  margin: 0px;
+  background: whitesmoke;
+}
+.show-more-right {
+  border-collapse: collapse;
+  border: 1px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-right: 4px;
+  text-align: right;
+  vertical-align: text-top;
+  margin: 0px;
+  background: whitesmoke;
+}
+[diff-type="+"] {
+  background: honeydew;
+}
+[diff-type="-"] {
+  background: lavenderblush;
+}
+[diff-type=".+"] {
+  background: honeydew;
+}
+[diff-type=".-"] {
+  background: lavenderblush;
+}
+[diff-type="=+"] {
+  background: honeydew;
+}
+[diff-type="=-"] {
+  background: lavenderblush;
+}
+[diff-type="++"] {
+  background: #c3f0c3;
+}
+[diff-type="--"] {
+  background: lightpink;
+}
+.img-diff-container {
+  z-index: 9999;
+  position: relative;
+  overflow: hidden;
+  box-sizing: content-box;
+}
+.img-diff-container img {
+  max-width: calc(100% - 8px);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  user-select: none;
+  z-index: 20;
+}
+.img-diff-after {
+  border: 4px solid green;
+}
+.img-diff-before {
+  border: 4px solid red;
+}
+.img-diff-container .img-diff-handle {
+  cursor: move;
+  z-index: 30;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.2);
+  border: 4px solid white;
+  border-radius: 50px;
+  margin-left: -4px;
+  margin-top: -4px;
+  user-select: none;
+}
+.img-diff-container .img-diff-handle:active,
+.img-diff-container .img-diff-handle:focus {
+  outline: 0;
+}
+.img-diff-container .img-diff-handle:before,
+.img-diff-container .img-diff-handle:after {
+  content: "";
+  border: 2px solid white;
+  height: 9999px;
+  position: absolute;
+  left: calc(50% - 2px);
+}
+.img-diff-container .img-diff-handle:before {
+  top: 40px;
+}
+.img-diff-container .img-diff-handle:after {
+  bottom: 40px;
+}
+.img-diff-container .img-diff-arrow-right,
+.img-diff-container .img-diff-arrow-left {
+  user-select: none;
+  position: relative;
+  width: 0;
+  height: 0;
+}
+.img-diff-container .img-diff-arrow-right {
+  bottom: 10px;
+  left: 23px;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 10px solid white;
+}
+.img-diff-container .img-diff-arrow-left {
+  top: 10px;
+  left: 7px;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid white;
+}
+.sticky {
+  background: white !important;
+  position: sticky !important;
+  top: 64px;
+  z-index: 10;
+}
+.v-window.sticky-container {
+  overflow: visible;
+}
+.full-width {
+  width: 100vw;
+}
+.comment-expanded {
+  transition-duration: 0.5s;
+  transition-timing-function: ease-in-out;
+}
+.comment-collapsed {
+  transform: rotate(180deg);
+  transition-duration: 0.5s;
+  transition-timing-function: ease-in-out;
+}
+.comment-highlight {
+  position: absolute;
+  left: 0;
+}
+.comment-positioner {
+  position: relative;
+}
+[highlight=" "] {
+  opacity: 0.0;
+}
+[highlight="*"] {
+    background-color: gold;
+    opacity: 0.2;
+}

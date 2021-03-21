@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<html lang="en">
+  <head>
+    <link href="/common.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <title>Ebert Depot Browser</title>
+  </head>
+  <body>
+    <div id="browser">
+      <v-app>
+        <v-app-bar app elevate-on-scroll color="indigo" dark>
+          <v-app-bar-nav-icon>
+            <a href="/dashboard/"><img src="/ebert.png" height="48"></img></a>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>
+            <span v-for="part of pathParts"><a class="app-link" :href="`/browse${part.link}`">{{part.name}}</a></span>
+            <span v-if="cl">
+              @ <a class="app-link" :href="`/review/${cl}`">{{cl}}</a>
+            </span>
+          </v-toolbar-title>
+          <template v-slot:extension>
+            <v-select
+              v-model="cl"
+              dense
+              outlined
+              rounded
+              :loading="!versions"
+              :items="versions || []"
+              item-value="Cl"
+              :item-text="ChangeDescription"
+              label="version">
+            </v-select>
+          </template>
+          <v-spacer></v-spacer>
+          <v-menu bottom
+                  close-on-click
+                  close-on-content-click
+                  left
+                  offset-y>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item>
+                <v-btn href="/dashboard/" text>Dashboard</v-btn>
+              </v-list-item>
+              <v-list-item>
+                <v-btn href="/projects/" text>Project Selector</v-btn>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-app-bar>
+        <v-main>
+          <v-container fluid>
+            <v-list dense v-if="subdirs || files">
+              <v-list-item v-for="subdir in subdirs"
+                           :key="`${path}${subdir}/`">
+                <v-btn text :href="`/browse${path.slice(1)}${subdir}/`"
+                       style="text-transform: none !important">
+                  <v-icon>mdi-folder</v-icon>
+                  {{subdir}}
+                </v-btn>
+              </v-list-item>
+              <v-list-item v-for="file in files"
+                           :key="`${path}${file.name}`">
+                <v-btn text :href="Link(file)"
+                       style="text-transform: none !important">
+                  <v-icon>mdi-file</v-icon>
+                  {{file.name}}
+                </v-btn>
+              </v-list-item>
+            </v-list>
+            <a v-if="link" :href="link" v-text="path"></a>
+            <img v-if="img" :src="img"/>
+            <table v-if="text" class="code-block" width="100%">
+              <tr v-for="(line, n) in text.split(/\r?\n/)" :id="n+1" :class="SelectedLineClass('selected-line', n+1)">
+                <td class="line-number"><a :href="LineLink(n+1)" v-text="n+1"></a></td>
+                <td class="code-line selectable">{{CodeLine(line)}}</td>
+              </tr>
+            </table>
+          </v-container>
+        </v-main>
+      </v-app>
+    </div>
+
+    <!-- Main entry point for browser. -->
+    <script>
+      var app = new Vue({
+        el: '#browser',
+        vuetify: new Vuetify(),
+        data: Object.assign({}, {
+          subdirs: null,
+          files: null,
+          text: "",
+          link: "",
+          img: "",
+          path: "",
+          line: 0,
+          cl: 0,
+          versions: null,
+        }, [[.]]),
+        methods: {
+          Link: function(item) {
+            if (item.link) {
+              return item.link;
+            }
+            if (this.cl) {
+              return `/browse${this.path.slice(1)}${item.name}?CL=${this.cl}`;
+            }
+            return `/browse${this.path.slice(1)}${item.name}`;
+          },
+          LineLink: function(line) {
+            return `/browse/${this.path.substring(2)}?CL=${this.cl}&L=${line}`;
+          },
+          CodeLine: function(text) {
+            if (text == "") {
+              return "\n"
+            }
+            return text
+          },
+          SelectedLineClass: function(selected, line) {
+            if (this.line == line) {
+              return selected
+            }
+            return ""
+          },
+          ChangeDescription(change) {
+            if (!change.Cl) {
+              return 'HEAD'
+            }
+            return `@${change.Cl} by ${change.User} - ${change.Description}`
+          },
+        },
+        computed: {
+          pathParts() {
+            let pathParts = [];
+            let link = "";
+            const parts = this.path.substring(1).split('/');
+            const last = parts.length - 1;
+            for (let i = 0; i < last; i++) {
+              const part = parts[i] + '/';
+              link = link + part;
+              pathParts.push({ name: part, link: link });
+            }
+            pathParts.push({ name: parts[last], link: link + parts[last] });
+            pathParts[0].name = '/' + pathParts[0].name;
+            return pathParts;
+          },
+        },
+        watch: {
+          cl(newCl, oldCl) {
+            if (newCl != oldCl) {
+              const path = this.path.substring(2);
+              if (newCl) {
+                window.location.href = `/browse/${path}?CL=${newCl}`;
+              } else {
+                window.location.href = `/browse/${path}`;
+              }
+            }
+          },
+        },
+        created() {
+          this.cl = parseInt(this.cl);
+          if (!this.cl) {
+            this.cl = 0;
+          }
+          fetch(`/ebert/browse/history/${this.path.substring(2)}`)
+            .then(function(res) {
+              if (!res.ok) {
+                return res.text().then(msg => { throw msg });
+              }
+              return res.json();
+            }).then(res => {
+              app.versions = [{ Cl: 0 }].concat(res);
+              if (app.cl != app.versions[0].Cl) {
+                // Find the most recent version.
+                const idx = res.findIndex((c) => c.Cl <= app.cl);
+                app.cl = app.versions[idx+1].Cl;
+              }
+            }).catch(err => {
+              console.log(err);
+            });
+        },
+        mounted: function() {
+          if (this.line == 0) {
+            return
+          }
+          this.$nextTick(() => {
+            document.getElementById(this.line.toString()).scrollIntoView({
+              block: "center", inline: "nearest",
+            });
+          })
+        },
+      })
+    </script>
+  </body>
+</html>

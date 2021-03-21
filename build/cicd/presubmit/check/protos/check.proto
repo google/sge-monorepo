@@ -1,0 +1,128 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package check;
+
+option go_package = "sge-monorepo/build/cicd/presubmit/check/protos/checkpb";
+
+import "build/cicd/sgeb/protos/build.proto";
+
+// A check is a single check inside a presubmit.
+message Check {
+  // action points to a checker tool to execute.
+  string action = 1;
+
+  // args are passed to the checker tool.
+  repeated string args = 2;
+}
+
+// Verifies that an sgeb build unit builds.
+message CheckBuild {
+  string build_unit = 1;
+}
+
+// Runs a sgeb test unit.
+message CheckTest {
+  string test_unit = 1;
+}
+
+// CheckerTool points the system to a binary to use for a check.
+message CheckerTool {
+  // action is the name of the checker tool.
+  // It corresponds to the 'action' field of the check.
+  string action = 1;
+
+  // bin is the binary to use. It can be either a build unit or a checked-in binary.
+  string bin = 2;
+
+  // args is arguments to pass to the binary
+  repeated string args = 3;
+
+  // whether to include this check in sgep fix
+  bool supports_fix = 4;
+
+  // if true, this check will only be run when a CL description is available.
+  bool needs_cl_description = 5;
+}
+
+// CheckerTools is the top-level message for a check tool configuration text proto.
+message CheckerTools {
+  repeated CheckerTool checker_tool = 1;
+}
+
+// File is a file included in the presubmit.
+message File {
+  // Path relative to monorepo root.
+  string path = 1;
+
+  // Status of file in CL.
+  Status status = 2;
+}
+
+// Status is modification type within a P4 CL.
+enum Status {
+  Create = 0;
+  Edit = 1;
+  Delete = 2;
+}
+
+// PresubmitCheck is passed to the CheckerTool via the --checker-invocation
+// command line argument to handle a particular presubmit.
+message CheckerInvocation {
+  // Triggered presubmits to run for this checker_tool.
+  // If the checker_tool has batched=1 then this may
+  // contain several checks, else it will exactly one.
+  repeated TriggeredCheck triggered_checks = 1;
+
+  // Presubmit CL. If this is a local run cl_number is 0.
+  int64 cl_number = 2;
+
+  // The CL description. If this is a local run the description is empty.
+  string cl_description = 3;
+
+  // monorepo path of a diff tool for presubmit checks that want to operate
+  // on changed parts of a file (for instance, divergence tagging checks).
+  string p4diff = 5;
+
+  // Any additional labels to pass to cloud logging.
+  repeated LogLabel log_labels = 6;
+}
+
+// LogLabel is a label intended for attaching to cloud log entries.
+message LogLabel {
+  string key = 1;
+  string value = 2;
+}
+
+// A triggered presubmit check.
+message TriggeredCheck {
+  // check that was triggered.
+  Check check = 1;
+
+  // The location of the presubmit's directory relative to
+  // the monorepo root. This enables resolving relative paths.
+  string dir = 2;
+
+  // Files from the CL that matched the presubmit.
+  repeated File files = 3;
+}
+
+// The result of a checker tool invocation.
+// Must be written to the location specified by the --checker-invocation-result
+// command line flag.
+message CheckerInvocationResult {
+  repeated build.Result results = 1;
+}

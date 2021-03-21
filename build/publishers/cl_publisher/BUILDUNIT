@@ -1,0 +1,10 @@
+build_unit {
+  name: "cl_publisher"
+  target: ":cl_publisher"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":cl_publisher"
+}

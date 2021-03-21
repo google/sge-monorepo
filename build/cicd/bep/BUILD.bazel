@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "bep",
+    srcs = ["bep.go"],
+    importpath = "sge-monorepo/build/cicd/bep",
+    visibility = [
+        "//build/cicd:__subpackages__",
+        "//tools/bazel2vs:__subpackages__",
+    ],
+    deps = [
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@io_bazel//src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_go_proto",
+        "@org_golang_google_protobuf//encoding/protowire",
+    ],
+)

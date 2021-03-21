@@ -1,0 +1,5 @@
+build_unit {
+  name: "client_cleanup"
+  target: ":client_cleanup"
+  args: "--config=windows-gnu"
+}

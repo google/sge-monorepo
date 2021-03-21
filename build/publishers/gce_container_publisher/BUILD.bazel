@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "gce_container_publisher_lib",
+    srcs = ["gce_container_publisher.go"],
+    importpath = "sge-monorepo/build/publishers/gce_container_publisher",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//libs/go/log",
+    ],
+)
+
+go_binary(
+    name = "gce_container_publisher",
+    embed = [":gce_container_publisher_lib"],
+    visibility = ["//visibility:public"],
+)

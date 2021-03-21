@@ -1,0 +1,90 @@
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.main-table {
+  width: 600px;
+}
+
+.background-pass {
+  background-color: #4ed34e;
+  color: white;
+}
+.background-fail {
+  background-color: #ee4c40;
+  color: white;
+}
+
+.banner {
+  font-size: 30px;
+  color: white;
+}
+.banner-table {
+  width: 100%;
+}
+.banner-icon {
+  padding: 40px 0 20px 0;
+}
+.banner-icon img {
+  display: block;
+}
+.banner-title {
+  padding-bottom: 20px;
+}
+
+.results-body {
+  padding: 10px;
+}
+.no-margin {
+  margin: 0;
+}
+.results-table {
+  border: 0;
+  width: 100%;
+}
+
+.actions-table {
+  padding-top: 20px;
+  width: 100%;
+}
+.btn a {
+  background-color: #ffffff;
+  border: solid 1px #3498db;
+  border-radius: 5px;
+  box-sizing: border-box;
+  color: #3498db;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0;
+  padding: 12px 25px;
+  text-decoration: none;
+  text-transform: capitalize;
+  width: 50%;
+}
+.btn-primary table td {
+  background-color: #3498db;
+}
+.btn-primary a {
+  background-color: #3498db;
+  border-color: #3498db;
+  color: #ffffff;
+}
+.check-result-name {
+  width: 100%;
+  padding-left: 4px;
+}
+

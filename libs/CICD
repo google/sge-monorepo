@@ -1,0 +1,14 @@
+presubmit {
+    check_test {
+        test_unit: ":tests"
+    }
+    check_test {
+        test_unit: "//build:tests"
+    }
+    check_test {
+        test_unit: "//tools:tests"
+    }
+    check_test {
+        test_unit: "//environment:tests"
+    }
+}

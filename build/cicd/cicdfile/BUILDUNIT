@@ -1,0 +1,5 @@
+test_unit {
+  name: "cicdfile_test"
+  target: ":cicdfile_test"
+  args: "--config=windows-gnu"
+}

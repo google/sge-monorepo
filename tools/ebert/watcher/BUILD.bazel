@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "watcher",
+    srcs = ["watcher.go"],
+    importpath = "sge-monorepo/tools/ebert/watcher",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libs/go/log",
+        "//tools/ebert/ebert",
+        "//tools/ebert/flags",
+        "//tools/ebert/handlers/trigger",
+    ],
+)

@@ -1,0 +1,25 @@
+build_unit {
+  name: "linux_toolchain_builder"
+  target: ":linux_toolchain_builder"
+  args: "--config=windows"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "linux_toolchain_builder_bin"
+  build_unit: "//tools/linux_toolchain_builder"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=linux_toolchain_builder"
+  args: "-out_dir=//bin/windows"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":linux_toolchain_builder"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

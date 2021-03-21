@@ -1,0 +1,31 @@
+build_unit {
+  name: "rename_repo_files"
+  target: ":rename_repo_files"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "rename_repo_files_bin"
+  build_unit: "//tools/rename_repo_files"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=rename_repo_files"
+  args: "-out_dir=//bin/windows"
+}
+
+test_unit {
+    name: "unit_tests"
+    target: "..."
+    args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":rename_repo_files"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "p4cmd_lib",
+    srcs = ["p4cmd.go"],
+    importpath = "sge-monorepo/libs/go/p4lib/p4cmd",
+    visibility = ["//visibility:private"],
+    deps = ["//libs/go/p4lib"],
+)
+
+go_binary(
+    name = "p4cmd",
+    embed = [":p4cmd_lib"],
+    visibility = ["//visibility:public"],
+)

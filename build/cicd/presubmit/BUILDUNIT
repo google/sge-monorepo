@@ -1,0 +1,5 @@
+test_unit {
+  name: "presubmit_test"
+  target: ":presubmit_test"
+  args: "--config=windows-gnu"
+}

@@ -1,0 +1,151 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template id="image-diff-template">
+  <div class="img-diff-container"
+       :style="containerStyle"
+       @touchstart="startSlide"
+       @mousedown="startSlide">
+    <img v-if="after"
+         class="img-diff-after"
+         :src="after"
+         @mousedown.prevent
+         @load="setDimensions"/>
+    <img v-if="before"
+         class="img-diff-before"
+         :src="before"
+         @mousedown.prevent
+         @load="setDimensions"
+         :style="beforeStyle"/>
+    <div v-if="before && after"
+         class="img-diff-handle"
+         :style="handleStyle"
+         tabindex="0"
+         @keydown="handleArrow">
+      <div class="img-diff-arrow-left"></div>
+      <div class="img-diff-arrow-right"></div>
+    </div>
+  </div>
+</template>
+<script>
+  Vue.component('image-diff', {
+    props: {
+      before: {
+        type: String,
+      },
+      after: {
+        type: String,
+      },
+    },
+    template: '#image-diff-template',
+    data() {
+      return {
+        imgOffset: null,
+        slideOffset: 0.5 + (this.after ? 0.0 : 0.5),
+        sliding: false,
+        containerStyle: {},
+      }
+    },
+    methods: {
+      setDimensions() {
+        const img = this.$el.querySelector("img");
+        const rect = img.getBoundingClientRect();
+        if (!this.imgOffset) {
+          this.imgOffset = rect;
+        }
+        this.containerStyle = { width: `${this.w}px`, height: `${this.h}px` };
+      },
+      startSlide(event) {
+        this.sliding = true;
+        this.moveSlide(event);
+      },
+      handleArrow(event) {
+        return this.moveSlide(event);
+      },
+      moveSlide(event) {
+        if (this.sliding) {
+          let x = (event.touches ? event.touches[0].pageX : event.pageX) - this.imgOffset.left;
+          x = (x < 0) ? 0 : ((x > this.w) ? this.w : x);
+          return this.slideOffset = (x / this.w);
+        }
+        if (event.key) {
+          switch (event.key) {
+          case "Left":
+          case "ArrowLeft":
+            this.slideOffset = Math.max(this.floatOffset - 0.2, 0);
+            break;
+          case "Right":
+          case "ArrowRight":
+            this.slideOffset = Math.min(this.floatOffset + 0.2, 1);
+            break;
+          }
+        }
+      },
+      endSlide() {
+        this.sliding = false;
+      },
+      resize() {
+        this.imgOffset = null;
+        this.containerStyle = {};
+        this.$nextTick(() => this.setDimensions());
+      },
+    },
+    computed: {
+      beforeStyle() {
+        return { clip: `rect(0, ${this.x}px, ${this.h}px, 0)` };
+      },
+      handleStyle() {
+        const size = 40;
+        return {
+          width: `${size}px`,
+          height: `${size}px`,
+          top: `calc(50% - ${size/2}px)`,
+          left: `calc(${this.slideOffset*100}% - ${size/2}px)`,
+        }
+      },
+      x() {
+        return this.w * this.slideOffset;
+      },
+      w() {
+        return this.imgOffset ? this.imgOffset.width : null;
+      },
+      h() {
+        return this.imgOffset ? this.imgOffset.height : null;
+      },
+      floatOffset() {
+        return parseFloat(this.slideOffset)
+      },
+    },
+    mounted() {
+      if (this.before && this.after) {
+        document.addEventListener("touchmove", this.moveSlide)
+        document.addEventListener("touchend", this.endSlide)
+        document.addEventListener("mousemove", this.moveSlide)
+        document.addEventListener("mouseup", this.endSlide)
+      }
+      window.addEventListener("resize", this.resize)
+    },
+    beforeDestroy() {
+      if (this.before && this.after) {
+        document.removeEventListener("touchmove", this.moveSlide)
+        document.removeEventListener("touchend", this.endSlide)
+        document.removeEventListener("mousemove", this.moveSlide)
+        document.removeEventListener("mouseup", this.endSlide)
+      }
+      window.removeEventListener("resize", this.resize)
+    },
+  });
+</script>

@@ -1,0 +1,15 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "packagemanifestpb_proto",
+    srcs = ["packagemanifest.proto"],
+    visibility = ["//visibility:private"],
+)
+
+go_proto_library(
+    name = "packagemanifestpb_go_proto",
+    importpath = "sge-monorepo/build/packagemanifest/protos/packagemanifestpb",
+    proto = ":packagemanifestpb_proto",
+    visibility = ["//build/packagemanifest:__subpackages__"],
+)

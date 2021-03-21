@@ -1,0 +1,103 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package msbuildpb;
+
+option go_package = "sge-monorepo/tools/bazel2vs/protos/msbuildpb";
+
+// File contains the various ways to describe a path for a file in bazel and name of the workspace that owns the file.
+message File {
+ // The execution path of this file, relative to the workspace's execution directory.
+ // It consists of two parts, an optional first part called the root (see also the root module),
+ // and the second part which is the short_path
+ string path = 1;
+
+ // The root beneath which this file resides.
+ string root_path = 2;
+
+ // The path of this file relative to its root
+ string short_path = 3;
+
+ // Name of the workspace that owns this file.
+ string owner_workspace_name = 4;
+}
+
+// SrcFiles list the source and header file for a specific build target.
+message SrcFiles {
+  // List of header files
+  repeated File hdrs = 1;
+
+  // List of source files.
+  repeated File srcs = 2;
+}
+
+// CcInfo list of includes directories and defines to compile a build target.
+message CcInfo {
+  // List of defines
+  repeated string defines = 1;
+
+  // List of include directories referenced both by angle bracket and quotes.
+  repeated string include_dirs = 2;
+
+  // List of include directories referenced by quote
+  repeated string quote_include_dirs = 3;
+
+  // List of include directories referenced by angle bracket.
+  repeated string system_include_dirs = 4;
+}
+
+// RustInfo Information needed to generate a rust project. Currently empty.
+message RustInfo {
+}
+
+// Label of the build target
+message Label {
+    // Name of the build target.
+    string name = 1;
+    // Package of the build target.
+    string pkg = 2;
+    // Name of the workspace where the build target is located.
+    string workspace_name = 3;
+    // Label of the build target.
+    string label = 4;
+    // execution root for the workspace of this label, relative to the execroot.
+    string workspace_root = 5;
+}
+
+// TargetInfo contains all the data necessary to generate a VS solution from bazel.
+// 1 message is generated per target.
+message TargetInfo {
+  // Defines, include directories and compile flags of the build target
+  CcInfo cc = 1;
+
+  // List of the dependencies of the build target.
+  repeated string deps = 2;
+
+  // Source files of the target.
+  SrcFiles files = 3;
+
+  // Kind of rule to build the target.
+  string kind = 4;
+
+  // Output files of the build target.
+  repeated File outputs = 7;
+
+  // Label of the build target
+  Label label = 10;
+
+  // RustInfo Information needed to generate a rust project.
+  RustInfo rust = 11;
+}

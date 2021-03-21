@@ -1,0 +1,4 @@
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

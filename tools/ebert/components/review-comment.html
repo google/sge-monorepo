@@ -1,0 +1,296 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<use-component src="/components/review-add-comment.html"></use-component>
+
+<template id="review-comment-template">
+  <v-card :class="Background()" :loading="del || sending">
+    <v-btn large text class="text-none comment-header"
+           :disabled = "edit"
+           tile block text @click="collapsed = !collapsed">
+      <i v-if="ci.comment.id < 0"
+         style="color: red">[Draft]</i>
+      <avatar :user="ci.comment.user"></avatar>
+      <span>{{action}}</span>
+      <span v-if="summary" class="comment-summary">
+        {{ci.comment.body}}
+      </span>
+      <span v-if="!summary && ci.comment.time != 0">
+        @ {{Unix2Date(ci.comment.time)}}
+      </span>
+      <v-chip v-if="ci.resolved"
+              small outlined color="primary"
+              style="margin: 1em;">
+        Resolved
+      </v-chip>
+      <v-spacer></v-spacer>
+      <v-slide-x-reverse-transition>
+        <span v-show="show && !edit && !add && !del">
+          <v-tooltip top v-if="ci.comment.id >= 0">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn x-small fab elevation="0"
+                     v-bind="attrs" v-on="on"
+                     @click.stop="AddComment('')">
+                <v-icon>mdi-reply</v-icon>
+              </v-btn>
+            </template>
+            Reply
+          </v-tooltip>
+          <v-tooltip top v-if="owner && ci.comment.id >= 0">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn x-small fab elevation="0"
+                     v-bind="attrs" v-on="on"
+                     @click.stop="AddComment('Done.', true)">
+                <v-icon>mdi-check</v-icon>
+              </v-btn>
+            </template>
+            Done
+          </v-tooltip>
+          <v-tooltip top v-if="owner && ci.comment.id >= 0">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn x-small fab elevation="0"
+                     v-bind="attrs" v-on="on"
+                     @click.stop="AddComment('Ack.', true)">
+                Ack
+              </v-btn>
+            </template>
+            Acknowledge and resolve
+          </v-tooltip>
+          <v-tooltip top v-if="ci.comment.id < 0">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn x-small fab elevation="0"
+                     v-bind="attrs" v-on="on"
+                     @click="EditComment()">
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+            </template>
+            Edit
+          </v-tooltip>
+          <v-tooltip top v-if="ci.comment.id < 0">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn x-small fab elevation="0"
+                     v-bind="attrs" v-on="on"
+                     @click="DeleteDraft()">
+                <v-icon>mdi-delete-outline</v-icon>
+              </v-btn>
+            </template>
+            Delete Draft
+          </v-tooltip>
+        </span>
+      </v-slide-x-reverse-transition>
+      <v-icon :class="'comment-' + (show ? 'expanded' : 'collapsed')">
+        mdi-chevron-up
+      </v-icon>
+    </v-btn>
+    <v-expand-transition>
+      <v-card-text v-show="show || showChildren">
+        <div v-if="!summary && !edit && !del">
+          <div v-if="!hideContext" class="comment-context">
+            <b v-if="CommentFile(ci) != ''">{{CommentFile(ci)}}</b>
+            <pre class="code-line"
+                 v-for="line in ci.comment.context.content"
+                 :diff-type="line[0]">{{ line.slice(1) }}</pre>
+          </div>
+          <p class="comment"
+             v-intersect="MarkRead">{{ci.comment.body}}</p>
+        </div>
+        <review-add-comment v-if="edit"
+                            :review-id="ci.comment.context.review"
+                            :reply-to="ci.comment.id"
+                            :body="ci.comment.body"
+                            :context="ci.comment.context.content"
+                            :draft-id="ci.comment.id"
+                            :resolve="ci.resolved"
+                            @dismiss-comment="edit = false">
+        </review-add-comment>
+        <review-add-comment v-if="add"
+                            :review-id="ci.comment.context.review"
+                            :reply-to="ci.comment.id"
+                            :body="body"
+                            :context="ci.comment.context.content"
+                            :resolve="owner"
+                            @dismiss-comment="add = false">
+        </review-add-comment>
+        <review-comment v-for="child in ci.children"
+                        :key="child.comment.id"
+                        action="replied"
+                        :depth="(depth ? depth : 0)+1"
+                        :hide-context="true"
+                        :summarize="summarize && (child.comment.id >= 0)"
+                        :collapse="child.resolved && child.allRead"
+                        :ci="child">
+        </review-comment>
+      </v-card-text>
+    </v-expand-transition>
+    <slot></slot>
+  </v-card>
+</template>
+
+<script src='/script/util.js'></script>
+<script>
+  Vue.component('review-comment', {
+    props: ['ci', 'action', 'hideContext', 'depth', 'collapse', 'summarize'],
+    template: '#review-comment-template',
+    data: function() {
+      return {
+        add: false,
+        body: '',
+        edit: false,
+        del: false,
+        collapsed: this.summarize || this.collapse,
+        sending: false,
+      };
+    },
+    computed: {
+      owner() {
+        return app.user == app.review.author;
+      },
+      show() {
+        return this.edit || !this.collapsed;
+      },
+      showChildren() {
+        return this.summarize && (this.ci.children.length > 0);
+      },
+      summary() {
+        return this.summarize && this.collapsed;
+      },
+    },
+    methods: {
+      Unix2Date: Unix2Date,
+      CommentFile(ci) {
+        if (ci.comment.context.file && ci.comment.context.file != '') {
+          const line = (ci.comment.context.rightLine ||
+                        ci.comment.context.leftLine);
+          return `${ci.comment.context.file}:${line}`;
+        }
+        if (ci.parent) {
+          return this.CommentFile(ci.parent);
+        }
+        return '';
+      },
+      MarkRead(entries, observer, isIntersecting) {
+        // Don't mark read if not intersecting or already read, and don't
+        // mark draft comments as read.
+        if (!isIntersecting || this.ci.read || this.ci.comment.id < 0) {
+          return;
+        }
+        let rid = this.ci.comment.context.review;
+        if (!rid) {
+          rid = app.review.id;
+        }
+        let cid = this.ci.comment.id;
+        let comment = this.ci.comment;
+        if (comment.readBy.indexOf(app.user) >= 0) {
+          return;
+        }
+        comment.readBy.push(app.user);
+        fetch(`/ebert/comments/read/${cid}`)
+          .then(function(res) {
+            if (!res.ok) {
+              return res.text().then(msg => {throw msg });
+            }
+          }).catch(function(error) {
+            app.ShowError(error);
+          });
+      },
+      AddComment(body, send = false) {
+        this.body = body;
+        this.add = !send;
+        if (send) {
+          this.sending = true;
+          const reviewId = this.ci.comment.review || app.review.id;
+          const url = `/ebert/comments/${reviewId}`;
+          const method = 'POST';
+          const flags = this.owner ? ['resolved'] : [];
+          fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              body: body,
+              topic: 'reviews/' + reviewId,
+              flags: flags,
+              context: Object.assign({}, this.ci.comment.context, {
+                comment: this.ci.comment.id,
+              }),
+            }),
+          }).then(function(res) {
+            if (!res.ok) {
+              return res.text().then(msg => { throw msg });
+            }
+            return res.json();
+          }).then(function(comment) {
+            app.UpdateComments(comment);
+          }).catch(function(error) {
+            app.ShowError(error);
+          }).finally(() => this.sending = false);
+        }
+      },
+      EditComment() {
+        if (this.ci.comment.id < 0) {
+          this.edit = true;
+        }
+      },
+      DeleteDraft() {
+        if (this.ci.comment.id < 0) {
+          this.del = true;
+          let rid = this.ci.comment.context.review;
+          if (!rid) {
+            rid = app.review.id;
+          }
+          let cid = this.ci.comment.id;
+          let file = this.ci.comment.context.file;
+          fetch(`/ebert/comments/${rid}/${cid}`, {
+            method: 'DELETE',
+          }).then(function(res) {
+            if (!res.ok) {
+              return res.text().then(msg => { throw msg });
+            }
+            return res.json();
+          }).then(function(deleted) {
+            let comments = app.comments.comments;
+            for (let i = 0; i < comments.length; i++) {
+              if (comments[i].id == deleted) {
+                comments.splice(i, 1);
+                break;
+              }
+            }
+            if (file) {
+              cachedDiffs[file] = null;
+            }
+            Vue.set(app.comments, 'comments', comments);
+          }).catch(function(error) {
+            app.ShowError(error);
+          }).finally(() => (this.del = false));
+        }
+      },
+      Background: function() {
+        let bg = ["comment"]
+        if (this.ci.resolved) {
+          bg.push("resolved");
+        }
+        if (!this.depth || (this.depth % 2) == 0) {
+          bg.push("even");
+        } else {
+          bg.push("odd");
+        }
+        return bg.join("-");
+      }
+    },
+  });
+</script>
+

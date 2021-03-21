@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "zip",
+    srcs = ["zip_pkg.go"],
+    importpath = "sge-monorepo/tools/vendor_bender/zip",
+    visibility = ["//tools/vendor_bender:__subpackages__"],
+    deps = [
+        "//libs/go/zip_utils",
+        "//tools/vendor_bender/protos:metadata_go_proto",
+    ],
+)

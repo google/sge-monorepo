@@ -1,0 +1,118 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package metadata;
+
+option go_package = "sge-monorepo/tools/vendor_bender/protos/metadatapb";
+
+message Metadata {
+  // (optional) name of this package.
+  // Example: foo, repo-builder, etc.
+  string name = 1;
+
+  // (optional) description of this package.
+  string description = 2;
+
+  // (optional) URL for documentation on this package.
+  // eg. go/sge-unreal-builds, etc.
+  string doc = 3;
+
+  // Contains additional information for third-party package.
+  ThirdParty third_party = 5;
+}
+
+message ThirdParty {
+  // Contains package source information
+  Source source = 1;
+
+  // Last upgrade date of package.
+  Date last_upgrade_date = 2;
+
+  // License info for the package.
+  License license = 3;
+
+  // Specify if this package is imported as a local repository and is his own workspace
+  bool is_local_repository = 4;
+}
+
+message Source {
+  // Contains specific information for the Git package.
+  GitPkg git_pkg = 1;
+
+  // Contains specific information for the Go package.
+  GoPkg go_pkg = 2;
+
+  // Contains specific information for the zip package.
+  ZipPkg zip_pkg = 3;
+
+  // Contains specific information for the rust package.
+  RustPkg rust_pkg = 4;
+}
+
+message GitPkg {
+  // Clone URL of git package.
+  string url = 1;
+
+  // SHA value of git package.
+  string sha = 2;
+}
+
+message GoPkg {
+  // Import path of go package.
+  string importpath = 1;
+
+  // Version of go package.
+  string version = 2;
+}
+
+message ZipPkg {
+  // URL of the zip package.
+  string url = 1;
+
+  // SHA value of the zip package.
+  string sha = 2;
+
+  // Version of the zip package.
+  string version = 3;
+}
+
+message RustPkg {
+  // URL of the rust package.
+  string url = 1;
+
+  // Version of the rust package.
+  string version = 2;
+}
+
+message Date {
+  // Year of date.
+  int32 year = 1;
+
+  // Month of year.
+  int32 month = 2;
+
+  // Day of month.
+  int32 day = 3;
+}
+
+message License {
+  // Type of license.
+  // eg. "RESTRICTED", "NOTICE", etc.
+  string type = 1;
+
+  // Name of license.
+  string name = 2;
+}

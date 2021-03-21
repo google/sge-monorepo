@@ -1,0 +1,26 @@
+namespace Render.Shader;
+
+enum ShaderType: uint8 
+{
+	Vertex,
+	Pixel,
+	Geometry,
+	Hull,
+	Domain,
+	Compute,
+}
+
+table ShaderHeader
+{
+	entry_point:string;
+	shader_type:ShaderType = Compute;
+	data:[uint8];
+}
+
+table ShaderPackage 
+{
+	name:string;
+	shaders:[ShaderHeader];
+}
+
+root_type ShaderPackage;

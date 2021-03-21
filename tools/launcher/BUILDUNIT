@@ -1,0 +1,28 @@
+build_unit {
+  name: "launcher"
+  target: ":launcher"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "launcher_bin"
+  build_unit: "//tools/launcher"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=launcher"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":launcher"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "trigger",
+    srcs = ["trigger.go"],
+    importpath = "sge-monorepo/tools/ebert/handlers/trigger",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libs/go/log",
+        "//libs/go/swarm",
+        "//tools/ebert/ebert",
+        "//tools/ebert/handlers/review",
+        "@io_bazel_rules_go//proto/wkt:field_mask_go_proto",
+    ],
+)

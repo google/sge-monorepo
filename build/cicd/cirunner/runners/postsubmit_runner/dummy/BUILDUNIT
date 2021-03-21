@@ -1,0 +1,58 @@
+build_unit {
+  name: "dummy"
+  target: ":dummy"
+}
+
+test_unit {
+  name: "dummy_test"
+  target: ":dummy_test"
+  post_submit {
+    frequency {
+      daily_at_utc: "12:00"
+    }
+  }
+}
+
+publish_unit {
+  name: "publish_when_dummy_changes"
+  build_unit: ":dummy"
+  bin: "//build/cicd/cirunner/runners/postsubmit_runner/dummy/publish"
+  post_submit {
+    trigger_paths {
+      path: "dummy.go"
+    }
+  }
+}
+
+publish_unit {
+  name: "publish_in_the_morning"
+  build_unit: ":dummy"
+  bin: "//build/cicd/cirunner/runners/postsubmit_runner/dummy/publish"
+  post_submit {
+    frequency {
+      daily_at_utc: "12:00"
+    }
+  }
+}
+
+publish_unit {
+  name: "publish_in_the_afternoon"
+  build_unit: ":dummy"
+  bin: "//build/cicd/cirunner/runners/postsubmit_runner/dummy/publish"
+  post_submit {
+    frequency {
+      daily_at_utc: "19:00"
+    }
+  }
+}
+
+publish_unit {
+  name: "publish_at_midnight"
+  build_unit: ":dummy"
+  bin: "//build/cicd/cirunner/runners/postsubmit_runner/dummy/publish"
+  post_submit {
+    frequency {
+      daily_at_utc: "05:00"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+build_unit {
+  name: "vendor_bender"
+  target: ":vendor_bender"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: "//tools/vendor_bender"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=vendor_bender"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+test_unit {
+    name: "unit_tests"
+    target: "..."
+    args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":vendor_bender"
+}
+
+test_suite {
+  name: "tests"
+  test_unit: "..."
+}

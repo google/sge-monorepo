@@ -1,0 +1,17 @@
+build_unit {
+  name: "time_buildtool"
+  target: ":time_buildtool"
+  args: "--config=windows-gnu"
+}
+
+build_unit {
+  name: "minute"
+  bin: ":time_buildtool"
+  args: "-minutes=1"
+}
+
+build_unit {
+  name: "week"
+  bin: ":time_buildtool"
+  args: "-days=7"
+}

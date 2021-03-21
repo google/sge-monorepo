@@ -1,0 +1,198 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template id="review-files-template">
+  <div>
+    <v-row align-content="center" class="full-width">
+      <v-col cols="5">
+        <v-select
+          @change="BaseChanged"
+          dense
+          outlined
+          rounded
+          :items="baseVersions"
+          :value="base"
+          item-text="description"
+          item-value="index"
+          label="Diff Base">
+        </v-select>
+      </v-col>
+      <v-col cols="5">
+        <v-select
+          @change="CurrChanged"
+          dense
+          outlined
+          rounded
+          :items="currVersions"
+          :value="curr"
+          item-text="description"
+          item-value="index"
+          label="Diff With">
+        </v-select>
+      </v-col>
+      <v-col cols="2">
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn rounded
+                   width="45%"
+                   v-bind="attrs"
+                   v-on="on"
+                   @click="CollapseAllFiles">
+              <v-icon>mdi-arrow-collapse-vertical</v-icon>
+            </v-btn>
+          </template>
+          Collapse All
+        </v-tooltip>
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn rounded
+                   width="45%"
+                   v-bind="attrs"
+                   v-on="on"
+                   @click="ExpandAllFiles">
+              <v-icon>mdi-arrow-expand-vertical</v-icon>
+            </v-btn>
+          </template>
+          Expand All
+        </v-tooltip>
+      </v-col>
+    </v-row>
+    <v-card class="full-width" :elevation="0">
+      <h4>{{currVersions[curr-base].description}}</h4>
+      <v-expansion-panels
+        accordion
+        hover
+        multiple
+        v-model="expanded"
+        v-if="!loading">
+        <review-file v-for="pair in visible"
+                     :pair="pair"
+                     :expanded="isExpanded[pair.name]"
+                     :latest="latest"
+                     :name="pair.name"
+                     :comments="comments[pair.name]"
+                     :review="review"
+                     :key="pair.name">
+        </review-file>
+      </v-expansion-panels>
+      <v-skeleton-loader v-if="loading || visible.length < pairs.length"
+                         v-intersect="{ handler: ShowMore }"
+                         type="list-item@3">
+      </v-skeleton-loader>
+    </v-card>
+  </div>
+</template>
+
+<use-component src="/components/review-file.html"></use-component>
+<script src="/script/util.js"></script>
+<script>Vue.component('review-files', {
+  template: '#review-files-template',
+  props: {
+    base: Number,
+    curr: Number,
+    versions: Array,
+    loading: Boolean,
+    pairs: Array,
+    review: Number,
+    comments: Object,
+  },
+  data() {
+    return {
+      expanded: [],
+      numVisible: 200,
+    };
+  },
+  computed: {
+    baseVersions() {
+      return [...Array(this.curr).keys()].map(i => ({
+        "index": i,
+        "description": this.VersionName(i),
+      }));
+    },
+    currVersions() {
+      var len = this.curr - this.base;
+      if (this.versions) {
+        len = this.versions.length - this.base;
+      }
+      len = len + 1;
+      versions = [...Array(len).keys()].map(i => ({
+        "index": i + this.base,
+        "description": this.VersionName(i + this.base),
+      }));
+      versions[0].divider = true;
+      return versions;
+    },
+    latest() {
+      // Return the curr version if it's the latest, or 0 otherwise.
+      return this.curr == this.versions.length && this.curr || 0;
+    },
+    isExpanded() {
+      let expanded = {}
+      for (const i of this.expanded) {
+        if (!this.pairs || i >= this.pairs.length) {
+          continue;
+        }
+        expanded[this.pairs[i].name] = true;
+      }
+      return expanded;
+    },
+    visible() {
+      if (this.loading) {
+        return [];
+      }
+      return this.pairs.slice(0, this.numVisible);
+    },
+  },
+  methods: {
+    VersionName(index) {
+      if (index <= 0) {
+        return 'Base version';
+      }
+      var idx = index - 1;
+      if (index >= this.versions.length) {
+        idx = this.versions.length - 1;
+      }
+      var version = this.versions[index - 1];
+      var name = '#' + index + ' by ' + version.user + ' shelved in ' + version.change + ' on ' + Unix2Date(version.time);
+      if (index >= this.versions.length) {
+        name = 'Latest version (' + name + ')';
+      }
+      return name;
+    },
+    BaseChanged(version) {
+      this.$emit('base-changed', version);
+    },
+    CurrChanged(version) {
+      this.$emit('curr-changed', version);
+    },
+    CollapseAllFiles() {
+      this.expanded = [];
+    },
+    ExpandAllFiles() {
+      this.expanded = [...Array(this.visible.length).keys()];
+    },
+    ShowMore(entries, observer) {
+      if (!this.loading && entries[0].isIntersecting) {
+        this.numVisible += 200;
+      }
+    },
+  },
+  watch: {
+    pairs() {
+      this.CollapseAllFiles();
+    },
+  },
+});</script>

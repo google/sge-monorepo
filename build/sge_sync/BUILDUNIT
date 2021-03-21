@@ -1,0 +1,5 @@
+test_unit {
+    name: "tests"
+    target: "..."
+    args: "--config=windows-gnu"
+}

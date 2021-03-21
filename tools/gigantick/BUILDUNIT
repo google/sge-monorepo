@@ -1,0 +1,29 @@
+build_unit {
+  name: "gigantick"
+  target: ":gigantick"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "gigantick_bin"
+  build_unit: "//tools/gigantick"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=gigantick"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":gigantick"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}
+

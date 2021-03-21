@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "owners",
+    srcs = ["owners.go"],
+    importpath = "sge-monorepo/build/owners",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/monorepo",
+        "//libs/go/files",
+    ],
+)
+
+go_test(
+    name = "owners_test",
+    srcs = ["owners_test.go"],
+    embed = [":owners"],
+    deps = ["//build/cicd/monorepo"],
+)

@@ -1,0 +1,5 @@
+build_unit {
+  name: "jenkins_scrapper"
+  target: ":jenkins_scrapper"
+  args: "--config=windows-gnu"
+}

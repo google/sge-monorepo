@@ -1,0 +1,29 @@
+build_unit {
+  name: "incredible"
+  target: ":incredible"
+  args: "--config=windows"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "incredible_bin"
+  build_unit: "//tools/incredible"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=incredible"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":incredible"
+}
+
+test_suite {
+  name: "tests"
+  test_unit: "..."
+}
+

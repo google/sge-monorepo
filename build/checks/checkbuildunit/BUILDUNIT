@@ -1,0 +1,10 @@
+build_unit {
+  name: "checkbuildunit"
+  target: ":checkbuildunit"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "checkbuildunit_build_test"
+  build_unit: ":checkbuildunit"
+}

@@ -1,0 +1,67 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package publish;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "sge-monorepo/build/cicd/cirunner/runners/postsubmit_runner/protos/postsubmitpb";
+
+// State of a publish unit with postsubmit turned on.
+message PostSubmitState {
+  // Status, see enum below.
+  PostSubmitStatus status = 1;
+
+  // Whether the last attempt succeeded.
+  bool success = 8;
+
+  // Base CL of the last successfully postsubmit action.
+  int64 last_published_cl = 2 [deprecated = true];
+
+  google.protobuf.Timestamp last_publish_time = 5 [deprecated = true];
+
+  // Base CL of the last successfully postsubmit action.
+  int64 last_postsubmit_cl = 9;
+
+  google.protobuf.Timestamp last_postsubmit_time = 10;
+
+  // Whether the postsubmit has been triggered by changed paths.
+  // Reset when it goes into status == PENDING.
+  bool pending_path_trigger = 6;
+
+  // Current task when in status == PENDING.
+  Task task = 3;
+
+  // Next time to retry when in status == FAILED.
+  google.protobuf.Timestamp next_retry = 4;
+
+  // Whether the state needs to be written back to p4.
+  bool dirty = 7;
+}
+
+message Task {
+  string key = 1;
+
+  google.protobuf.Timestamp start_time = 2;
+
+  int64 cl = 3;
+}
+
+enum PostSubmitStatus {
+  SUCCESS = 0;
+  FAILED = 1;
+  PENDING = 2;
+}

@@ -1,0 +1,33 @@
+build_unit {
+  name: "gazelle"
+  target: ":gazelle"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "gazelle_build_test"
+  build_unit: ":gazelle"
+}
+
+build_unit {
+  name: "gazelle_fixer"
+  target: "gazelle_fixer:gazelle_fixer"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "gazelle_fixer_build_test"
+  build_unit: ":gazelle_fixer"
+}
+
+publish_unit {
+  name: "gazelle_fixer_publish"
+  build_unit: ":gazelle_fixer"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=gazelle_fixer"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+

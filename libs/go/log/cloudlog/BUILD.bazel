@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cloudlog",
+    srcs = ["cloudlog.go"],
+    importpath = "sge-monorepo/libs/go/log/cloudlog",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//libs/go/log",
+        "@com_google_cloud_go_logging//:logging",
+        "@go_googleapis//google/logging/v2:logging_go_proto",
+        "@org_golang_google_api//compute/v1:compute",
+        "@org_golang_x_oauth2//google",
+    ],
+)

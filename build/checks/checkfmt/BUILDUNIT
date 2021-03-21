@@ -1,0 +1,16 @@
+build_unit {
+  name: "checkfmt"
+  target: ":checkfmt"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "checkfmt_build_test"
+  build_unit: ":checkfmt"
+}
+
+test_unit {
+  name: "checkfmt_test"
+  target: ":checkfmt_test"
+  args: "--config=windows-gnu"
+}

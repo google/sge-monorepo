@@ -1,0 +1,28 @@
+build_unit {
+  name: "package_builder"
+  target: ":package_builder"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":package_builder"
+}
+
+build_unit {
+  name: "package_builder_test"
+  bin: ":package_builder"
+  deps: ":package_builder"
+  args: "-input=//build/builders/package_builder/package_builder_/package_builder.exe bin/packager.exe"
+  args: "-src=....go srcs/..."
+}
+
+build_test_unit {
+  name: "package_builder_test_build_test"
+  build_unit: ":package_builder_test"
+}
+
+test_suite {
+  name: "test"
+  test_unit: "..."
+}

@@ -1,0 +1,110 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package cirunner;
+
+option go_package = "sge-monorepo/build/cicd/cirunner/protos/cirunnerpb";
+
+message RunnerInvocation {
+  // Shelved CL associated with the CL. This information might be repeated by some runners messages.
+  int64 change = 1;
+
+  // Base CL that we synced to.
+  int64 base_cl = 5;
+
+  // Each runner should introduce a new message underneath here.
+  message Presubmit {
+    // Swarm review id associated with the run.
+    int64 review = 1;
+
+    // CL number associated with the run.
+    int64 change = 2;
+
+    // Update http endpoint to communicate results back.
+    string update_url = 3;
+
+    // Url where the CI run results will be displayed. Normally communicated back to the endpoint
+    // defined in |update_url|.
+    string results_url = 4;
+  }
+  Presubmit presubmit = 2;
+
+  // This message is for executing the dev_runner, which is meant for executing manual dev code.
+  message Dev {}
+  Dev dev = 3;
+
+  // Execute publish_runner, which runs all publish units with auto_publish set.
+  message Publish {
+    // Url where the CI run results will be displayed. Normally communicated back to the endpoint
+    // defined in |update_url|.
+    string results_url = 1;
+  }
+  Publish publish = 4;
+
+  // Execute postsubmit_runner, which runs all publish units with postsubmit set.
+  message PostSubmit {}
+  PostSubmit postsubmit = 9;
+
+  message Cron {
+    // Url where the CI run results will be displayed. Normally communicated back to the endpoint
+    // defined in |update_url|.
+    string results_url = 1;
+  }
+  Cron cron = 6;
+
+  // Execute prewarm_runner, which prepares a machine for efficient functioning.
+  message Prewarm {}
+  Prewarm prewarm = 7;
+
+  // Execute unit_runner, which executes a publish_unit by label.
+  message Unit {
+    // Label to be built by the runner. Must be a monorepo label.
+    string build_unit = 1;
+
+    // Label to be published by the runner. Must be a monorepo label.
+    string publish_unit = 2;
+
+    // Label to be tested by the runner. Must be a monorepo label.
+    string test_unit = 3;
+
+    // Task label to be run by the runner. Must be a monorepo label.
+    string task_unit = 10;
+
+    // (optional) P4 key to store results back in. unit_runner will update the state accordingly
+    // and communicate back any log url.
+    string task_key = 4;
+
+    // Whoever is invoking this unit, for information purposes.
+    // When executed by a user (sgeb -remote), it should show the calling user (eg. foo@bar.com).
+    // When executed in CICD, it should show the automation user (eg. jenkins, swarm, etc.).
+    string invoker = 5;
+
+    // URL associated with the invoker, for description purposes.
+    string invoker_url = 6;
+
+    // Url where the CI run results will be displayed. Normally communicated back to the endpoint
+    // defined in |update_url|.
+    string results_url = 7;
+
+    // log level to forward to build.
+    string log_level = 8;
+
+    // Semicolon-separated list of arguments to pass to execution
+    // Currently only valid for publish units.
+    string args = 9;
+  }
+  Unit unit = 8;
+}

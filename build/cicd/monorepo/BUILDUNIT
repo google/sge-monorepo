@@ -1,0 +1,5 @@
+test_unit {
+  name: "monorepo_test"
+  target: ":monorepo_test"
+  args: "--config=windows-gnu"
+}

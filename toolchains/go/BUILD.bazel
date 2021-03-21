@@ -1,0 +1,16 @@
+# Standard constraint_setting and constraint_values to be used for Go.
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+constraint_setting(name = "go_version")
+
+constraint_value(
+    name = "1.14.3",
+    constraint_setting = ":go_version",
+)
+
+constraint_value(
+    name = "1.16.2",
+    constraint_setting = ":go_version",
+)

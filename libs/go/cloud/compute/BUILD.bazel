@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "compute",
+    srcs = ["compute.go"],
+    importpath = "sge-monorepo/libs/go/cloud/compute",
+    visibility = ["//visibility:public"],
+    deps = ["@org_golang_google_api//compute/v1:compute"],
+)

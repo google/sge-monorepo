@@ -1,0 +1,18 @@
+build_unit {
+  name: "cirunner"
+  target: ":cirunner"
+  args: "--config=windows-gnu"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":cirunner"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=cirunner"
+  args: "-out_dir=//build/cicd/cirunner/windows"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":cirunner"
+}

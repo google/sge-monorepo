@@ -1,0 +1,25 @@
+deps: "//tools/shaderpacker_rust:shaderpacker_rust_lib"
+files {
+  srcs {
+    owner_workspace_name: ""
+    path: "tools/shaderpacker_rust/src/main.rs"
+    root_path: ""
+    short_path: "tools/shaderpacker_rust/src/main.rs"
+  }
+}
+kind: "rust_binary"
+label {
+  label: "//tools/shaderpacker_rust:shaderpacker_rust"
+  name: "shaderpacker_rust"
+  pkg: "tools/shaderpacker_rust"
+  workspace_name: ""
+  workspace_root: ""
+}
+outputs {
+  owner_workspace_name: ""
+  path: "bazel-out/x64_windows-fastbuild/bin/tools/shaderpacker_rust/shaderpacker_rust.exe"
+  root_path: "bazel-out/x64_windows-fastbuild/bin"
+  short_path: "tools/shaderpacker_rust/shaderpacker_rust.exe"
+}
+rust {
+}

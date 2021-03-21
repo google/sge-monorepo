@@ -1,0 +1,395 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<template id="text-diff-template">
+  <div>
+    <v-snackbar v-model="showSnackbar"
+                bottom
+                :timeout="-1">
+      <div class="text-center">Press 'c' to comment.</div>
+    </v-snackbar>
+    <h3 v-if="identical">Files are identical.</h3>
+    <table class="code-block">
+      <tbody>
+        <template v-for="line in displayed">
+          <tr v-if="line.collapsed">
+            <td class="line-number"></td>
+            <td class="show-more-right" width=50%>
+              <v-btn v-if="line.prev >= 0"
+                     @click="Expand(line.prev, line.delta)">
+                Show More
+                <v-icon>mdi-chevron-down</v-icon>
+              </v-btn>
+            </td>
+            <td class="line-number"></td>
+            <td class="show-more-left" width=50%>
+              <v-btn v-if="line.next >= 0"
+                     style="text-align:left"
+                     @click="Expand(line.next, -line.delta)">
+                Show More
+                <v-icon>mdi-chevron-up</v-icon>
+              </v-btn>
+            </td>
+          </tr>
+          <tr v-if="!line.collapsed" @mouseup="PromptUser">
+            <template v-for="side in ['left', 'right']">
+              <td class="line-number">{{line[`${side}no`]}}</td>
+              <td class="code-line"
+                  width="50%"
+                  @mousedown="StartSelection(side, line[`${side}no`])"
+                  :class="{ selectable: select == side && line[`${side}raw`] }"
+                  :data-lineno="line[`${side}no`]"
+                  :data-idx="line.idx"
+                  :data-diff-type="line[`${side}type`]"
+                  :diff-type="line[`${side}type`]">
+                <div class="comment-positioner">
+                  <span :diff-type="line[`${side}type`]+cdiff[0]"
+                        v-for="cdiff in line[side]">{{cdiff.slice(1)}}</span>
+                  <span v-for="highlight in ['Highlight', 'Selection']"
+                        v-if="line[`${side}${highlight}`]"
+                        class="comment-highlight">
+                    <span v-for="x in line[`${side}${highlight}`]"
+                          :highlight="x[0]">{{x.slice(1)}}</span>
+                  </span>
+                </div>
+              </td>
+            </template>
+          </tr>
+          <tr v-if="!line.collapsed && AddCommentAny(line)">
+            <template v-for="side in ['left', 'right']">
+              <td class="line-number"></td>
+              <td width="50%">
+                <review-add-comment
+                  v-if="AddComment(side, line[`${side}no`])"
+                  @dismiss-comment="DismissComment(side, line[`${side}no`])"
+                  :request-builder="RequestBuilder()"
+                  :review-id="reviewId"
+                  :context="selection ? selection.lines : null"
+                  :file="name"
+                  :left-line="side == 'left' ? line.leftno : null"
+                  :right-line="side == 'right' ? line.rightno : null">
+                </review-add-comment>
+              </td>
+            </template>
+          </tr>
+          <tr v-for="ci in line.comments">
+            <template v-for="side in ['left', 'right']">
+              <td class="line-number">
+                <v-icon v-if="ci[side]">mdi-message-reply-text</v-icon>
+              </td>
+              <td>
+                <review-comment
+                  v-if="ci[side]"
+                  :ci="ci[side]"
+                  action="commented"
+                  hide-context="true"
+                  :collapse="ci[side].resolved && ci[side].allRead"
+                  :key="ci[side].comment.id">
+                </review-comment>
+              </td>
+            </template>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+  Vue.component('text-diffs', {
+    props: ['diffs', 'name', 'review-id'],
+    template: '#text-diff-template',
+    data: function() {
+      return {
+        addComments: {},
+        identical: false,
+        line: null,
+        select: '',
+        selection: null,
+        showSelection: { 'left': {}, 'right': {} },
+        showSnackbar: false,
+        visible: [],
+      };
+    },
+    methods: {
+      StartSelection(side, line) {
+        this.showSnackbar = false;
+        this.select = side;
+        this.line = line;
+      },
+      findLine(node) {
+        while (node) {
+          if (node.dataset && node.dataset.lineno) {
+            return node;
+          }
+          node = node.parentNode;
+        }
+        return null;
+      },
+      context(sel, side) {
+        if (!sel || sel.rangeCount < 1) {
+          return null;
+        }
+        const range = sel.getRangeAt(0);
+        if (range.collapsed) {
+          return null;
+        }
+        const start = this.findLine(range.startContainer);
+        if (!start) {
+          return null;
+        }
+        const raw = `${side}raw`;
+        const startIdx = parseInt(start.dataset.idx);
+        const end = this.findLine(range.endContainer);
+        let endIdx = end ? parseInt(end.dataset.idx) : null;
+        if (!endIdx && endIdx !== 0) {
+          endIdx = startIdx + 1;
+          while (this.diffs[endIdx][raw]) {
+            endIdx++;
+          }
+          endIdx--;
+        }
+
+        // Capture raw lines.
+        let lines = [];
+        for (let i = startIdx; i <= endIdx; i++) {
+          if (this.diffs[i][raw]) {
+            lines.push(this.diffs[i][raw]);
+          }
+        }
+        if (lines.length < 1) {
+          return null;
+        }
+        
+        // Now figure out the start/end offsets.
+        const startRange = document.createRange();
+        startRange.selectNode(start);
+        startRange.setEnd(range.startContainer, range.startOffset);
+        const startOffset = startRange.toString().length;
+
+        let endOffset = lines[lines.length-1].length;
+        if (end) {
+          const endRange = document.createRange();
+          endRange.selectNode(end);
+          endRange.setEnd(range.endContainer, range.endOffset);
+          endOffset = endRange.toString().length;
+          if (lines.length > 1 && endOffset <= 0) {
+            lines.pop();
+            endOffset = lines[lines.length-1].length;
+          }
+        }
+
+        return {
+          line: this.diffs[endIdx][`${side}no`],
+          lines: lines,
+          start: startOffset,
+          end: endOffset,
+        }
+      },
+      PromptUser() {
+        if (!this.select) {
+          return;
+        }
+        this.selection = this.context(document.getSelection(), this.select);
+        this.showSnackbar |= (this.selection != null);
+        this.showSelection = { 'left': {}, 'right': {} };
+      },
+      Comment() {
+        if (this.selection && this.selection.line) {
+          const key = this.AddCommentKey(this.select, this.selection.line);
+          this.ToggleAddComment(key);
+          // Build the showSelection data.
+          let showSelection = {};
+          const lines = this.selection.lines;
+          const last = this.selection.line;
+          const first = last - lines.length + 1;
+          for (let i = 0; i < lines.length; i++) {
+            showSelection[first + i] = ['*' + lines[i].substring(1)];
+          }
+          // Fixup ends of selection.
+          showSelection[last][0] = showSelection[last][0].substring(0, this.selection.end + 1);
+          showSelection[first][0] = showSelection[first][0][0] + showSelection[first][0].substring(this.selection.start + 1);
+          showSelection[first].unshift(' ' + lines[0].substring(1, this.selection.start + 1));
+          this.showSelection[this.select] = showSelection;
+        }
+        this.showSnackbar = false;
+      },
+      RequestBuilder() {
+        let self = this;
+        return function(req) {
+          if (!self.selection) {
+            return req;
+          }
+          const flags = req.flags || [];
+          return Object.assign({}, req, {
+            flags: flags.concat([`context-start-offset=${self.selection.start}`,
+                                 `context-end-offset=${self.selection.end}`]),
+          });
+        };
+      },
+      ToggleAddComment: function(key) {
+        Vue.set(this.addComments, key, !this.addComments[key]);
+      },
+      DismissComment(side, line) {
+        this.ToggleAddComment(this.AddCommentKey(side, line));
+        this.showSelection = { 'left': {}, 'right': {} };
+      },
+      AddCommentKey(side, line) {
+        return `${side}:${line}`;
+      },
+      AddComment: function(side, line) {
+        return this.addComments[this.AddCommentKey(side, line)];
+      },
+      AddCommentAny: function(line) {
+        return this.AddComment('left', line.leftno) ||
+          this.AddComment('right', line.rightno);
+      },
+      Expand: function(vis, delta) {
+        if (vis < 0 || vis >= this.visible.length) {
+          app.ShowError(`${vis} out of range`);
+        }
+        if (delta < 0) {
+          Vue.set(this.visible, vis,
+                  Object.assign({}, this.visible[vis], {
+                    start: this.visible[vis].start + delta,
+                  }));
+        } else {
+          Vue.set(this.visible, vis,
+                  Object.assign({}, this.visible[vis], {
+                    stop: this.visible[vis].stop + delta,
+                  }));
+        }
+      }
+    },
+    computed: {
+      displayed: function() {
+        let collapsing = null;
+        if (this.visible[0].start > 0) {
+          collapsing = {
+            collapsed: true,
+            delta: 10,
+            prev: -1,
+            next: -1,
+          };
+        }
+        let show = [];
+        let vis = 0;
+        for (let i in this.diffs) {
+          let line = this.diffs[i];
+          let visible = false;
+          for (let j = vis; j < this.visible.length; j++) {
+            let region = this.visible[j];
+            if ((i >= region.start) && (i < region.stop)) {
+              visible = true;
+              vis = j;
+              break;
+            }
+          }
+          if (visible) {
+            if (collapsing) {
+              collapsing.next = vis;
+              show.push(collapsing)
+            }
+            collapsing = null;
+
+            show.push(Object.assign({}, line, {
+              idx: i,
+              collapsed: false,
+              leftSelection: this.showSelection.left[line.leftno],
+              rightSelection: this.showSelection.right[line.rightno],
+            }));
+          } else {
+            if (!collapsing) {
+              collapsing = {
+                collapsed: true,
+                delta: 10,
+                prev: vis,
+                next: -1,
+              }
+            }
+          }
+        }
+        if (collapsing) {
+          collapsing.next = -1;
+          show.push(collapsing);
+        }
+        return show;
+      },
+    },
+    created: function() {
+      // Initialize state for collapsed lines.
+      let show = [];
+      let showing = false;
+      let start = 0;
+      for (let i in this.diffs) {
+        let line = this.diffs[i];
+        if (!showing &&
+            (line.lefttype != '=' || line.righttype != '=' ||
+             line.comments.length > 0)) {
+          start = i;
+          showing = true;
+        } else if (showing &&
+                   line.lefttype == '=' &&
+                   line.righttype == '=' &&
+                   line.comments.length == 0) {
+          showing = false;
+          show.push({ start: start, stop: i});
+        }
+      }
+      if (showing) {
+        show.push({ start: start, stop: this.diffs.length});
+      }
+      if (show.length == 0) {
+        // Files are identical, hide everything.
+        this.identical = true;
+        this.visible = [{
+          start0: 0,
+          start: 0,
+          stop0: 0,
+          stop: 0,
+        }];
+        return;
+      }
+      // Update the visible intervals to include context.
+      // It's OK if the intervals overlap.
+      const contextLines = 5;
+      let with_context = [];
+      for (x of show) {
+        with_context.push({
+          start0: x.start*1,
+          stop0: x.stop*1,
+          start: x.start*1 - contextLines,
+          stop: x.stop*1 + contextLines,
+        });
+      }
+      this.visible = with_context;
+    },
+    mounted() {
+      this._keyListener = function(event) {
+        const modifier = (event.ctrlKey || event.metaKey ||
+                          event.shiftKey || event.altKey);
+        if (this.showSnackbar && event.key == "c" && !modifier) {
+          event.preventDefault();
+          this.Comment();
+        }
+      };
+      window.addEventListener('keydown', this._keyListener.bind(this));
+    },
+    beforeDestroy() {
+      window.removeEventListener('keydown', this._keyListener);
+    },
+  });
+</script>

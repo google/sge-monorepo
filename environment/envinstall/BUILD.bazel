@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "envinstall",
+    srcs = [
+        "dependencies.go",
+        "manager.go",
+    ],
+    importpath = "sge-monorepo/environment/envinstall",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//libs/go/cloud/secretmanager",
+        "//libs/go/p4lib",
+        "@com_github_golang_protobuf//proto:go_default_library",
+    ],
+)

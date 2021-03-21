@@ -1,0 +1,10 @@
+build_unit {
+  name: "jenkins"
+  target: ":jenkins"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":jenkins"
+}

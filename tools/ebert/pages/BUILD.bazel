@@ -1,0 +1,16 @@
+load("//tools/ebert/pages:pages.bzl", "pages")
+
+filegroup(
+    name = "includes",
+    srcs = [
+        "//tools/ebert/components",
+        "//tools/ebert/script",
+    ],
+)
+
+pages(
+    name = "pages",
+    srcs = glob(["*.html"]),
+    visibility = ["//tools/ebert:__pkg__"],
+    deps = [":includes"],
+)

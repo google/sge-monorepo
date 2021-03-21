@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//libs/bzl/build_test:build_test.bzl", "build_test")
+
+go_library(
+    name = "publish_runner_lib",
+    srcs = ["publish_runner.go"],
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/publish_runner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/runners/publish_runner/protos:publishpb_go_proto",
+        "//build/cicd/cirunner/runnertool",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/build",
+        "//build/cicd/sgeb/protos:sgeb_go_proto",
+        "//libs/go/email",
+        "//libs/go/p4lib",
+        "@com_github_golang_glog//:glog",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:timestamp_go_proto",
+    ],
+)
+
+go_binary(
+    name = "publish_runner",
+    embed = [":publish_runner_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,23 @@
+load("//libs/bzl/build_test:build_test.bzl", "build_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "sgep_lib",
+    srcs = ["sgep.go"],
+    importpath = "sge-monorepo/build/cicd/sgep",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cicdfile",
+        "//build/cicd/monorepo",
+        "//build/cicd/monorepo/universe",
+        "//build/cicd/presubmit",
+        "//build/cicd/presubmit/protos:presubmit_go_proto",
+        "//libs/go/p4lib",
+    ],
+)
+
+go_binary(
+    name = "sgep",
+    embed = [":sgep_lib"],
+    visibility = ["//visibility:public"],
+)

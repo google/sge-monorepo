@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("//libs/bzl/build_test:build_test.bzl", "build_test")
+
+go_library(
+    name = "banrules_lib",
+    srcs = ["banrules.go"],
+    importpath = "sge-monorepo/build/checks/banrules",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/presubmit/check",
+        "//build/cicd/presubmit/check/protos:check_go_proto",
+        "//build/cicd/sgeb/protos:build_go_proto",
+    ],
+)
+
+go_binary(
+    name = "banrules",
+    embed = [":banrules_lib"],
+    visibility = ["//visibility:public"],
+)

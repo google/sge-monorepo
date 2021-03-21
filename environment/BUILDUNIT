@@ -1,0 +1,26 @@
+build_unit {
+  name: "environment"
+  target: ":environment"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":environment"
+}
+
+test_suite {
+  name: "tests"
+  test_unit: "..."
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":environment"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=update_environment"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}

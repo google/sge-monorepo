@@ -1,0 +1,254 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+option go_package = "sge-monorepo/build/cicd/sgeb/protos/sgebpb";
+
+message BuildUnits {
+  repeated BuildUnit build_unit = 1;
+
+  repeated TestUnit test_unit = 2;
+
+  repeated TestSuite test_suite = 3;
+
+  repeated BuildTestUnit build_test_unit = 6;
+
+  repeated PublishUnit publish_unit = 4;
+
+  repeated CronUnit cron_unit = 5;
+
+  repeated TaskUnit task_unit = 7;
+}
+
+// A build unit is an sgeb-addressable unit that lives in
+// a BUILDUNIT file. It can be built by invoking
+// sgeb build <build-unit>.
+message BuildUnit {
+  // The name of the build unit.
+  string name = 1;
+
+  // Bazel target if this is a Bazel build unit.
+  string target = 2;
+
+  // Binary if this is a non-Bazel build unit.
+  // May refer to a checked-in binary or another build unit.
+  string bin = 3;
+
+  // Arguments to be passed to the build invocation.
+  repeated string args = 4;
+
+  // Environment variables. Ignored for bazel build units.
+  repeated EnvVar env_vars = 5;
+
+  // Dependencies on other build units.
+  // The dependent build units are built and passed
+  // in the Invocation proto via the --build_invocation argument.
+  // Bazel build units are not allowed to have dependencies.
+  repeated string deps = 6;
+}
+
+// A test unit is an sgeb-addressable unit that lives in
+// a BUILDUNIT file. It can be built by invoking
+// sgeb test <build-unit>.
+message TestUnit {
+  // The name of the test unit.
+  string name = 1;
+
+  // Bazel target expressions if this is a Bazel test unit.
+  repeated string target = 2;
+
+  // Binary if this is a non-Bazel test unit.
+  // May refer to a checked-in binary or another test unit.
+  string bin = 3;
+
+  // Arguments to be passed to the test invocation.
+  repeated string args = 4;
+
+  // Environment variables. Ignored for bazel test units.
+  repeated EnvVar env_vars = 5;
+
+  // Dependencies on other build units.
+  // The dependent build units are built and passed
+  // in the Invocation proto via the --build_invocation argument.
+  // Bazel test units are not allowed to have dependencies.
+  repeated string deps = 6;
+
+  // Marker for test units that are subject to postsubmit.
+  PostSubmit post_submit = 7;
+}
+
+// A test suite is a collection of test units.
+message TestSuite {
+  // The name of the test suite.
+  string name = 1;
+
+  // Test units. May also be the special string "..." to indicate all tests recursively under here.
+  repeated string test_unit = 2;
+}
+
+// A build test unit points to a build unit and converts it into a test that ensures the build unit builds correctly.
+message BuildTestUnit {
+  // Name of the build test.
+  string name = 1;
+
+  // Build unit to test.
+  string build_unit = 2;
+}
+
+// A publish unit hooks up the output of a BuildUnit with a publishing tool.
+message PublishUnit {
+  // The name of the publish unit.
+  string name = 1;
+
+  // Build units to publish. Will be supplied as an input to the publish binary
+  // via the --tool-invocation argument.
+  repeated string build_unit = 2;
+
+  // Binary to use for publishing.
+  // May refer to a checked-in binary or another build unit.
+  string bin = 3;
+
+  // Dependent publish units to publish with the same publish command.
+  // If you have dependencies, you may not have build_units and vice versa.
+  repeated string publish_unit = 6;
+
+  // Arguments to be passed to the publish binary.
+  repeated string args = 4;
+
+  // Marker for publish units that should be automatically published.
+  AutoPublish auto_publish = 5;
+
+  // Marker for publish units that are subject to postsubmit.
+  PostSubmit post_submit = 7;
+}
+
+// AutoPublish serves as a marker for publish units that should be automatically published.
+message AutoPublish {
+  // Additional arguments to pass to the publishing binary in auto-publish mode.
+  repeated string args = 1;
+
+  // Notification configuration for the autopublish system.
+  NotificationConfig notify = 3;
+}
+
+// PostSubmit serves as a marker for test/publish units that should be automatically published.
+message PostSubmit {
+  // Additional arguments to pass to the binary in when publishing.
+  // Only valid for publish post submits, tests cannot receive arguments.
+  repeated string args = 1;
+
+  // Notification configuration for the postsubmit.
+  NotificationConfig notify = 7;
+
+  // Frequency to execute the postubmit at.
+  PostSubmitFrequency frequency = 3;
+
+  // P4 paths that trigger this postsubmit.
+  PostSubmitTriggerPathSet trigger_paths = 4;
+
+  // Trigger postsubmit on every CL. Used internally to test the postsubmit system.
+  bool trigger_always_for_testing = 5;
+
+  // Timeout for the job in minutes. Default is 120.
+  int32 timeout_minutes = 6;
+}
+
+message NotificationConfig {
+  // Email(s) to send notifications to.
+  repeated string email = 1;
+
+  // The policy for when to send notifications.
+  // For postsubmits, the default is currently NOTIFY_ALWAYS, but likely to be changed to NOTIFY_ON_FAILURE_AND_RECOVERY.
+  // For autopublish the default is NOTIFY_ON_FAILURE_AND_RECOVERY.
+  // For cron units, the default is NOTIFY_ON_FAILURE_AND_RECOVERY.
+  NotificationPolicy policy = 2;
+}
+
+enum NotificationPolicy {
+  // Get whatever the default is for the runner (postsubmit/cron/autopublish)
+  DEFAULT = 0;
+  // Never notify. Only really useful to temporarily disable emails.
+  NOTIFY_NEVER = 1;
+  // Only notify on failure.
+  NOTIFY_ON_FAILURE = 2;
+  // Notify on failure and on a fresh success after one or more failures.
+  NOTIFY_ON_FAILURE_AND_RECOVERY = 3;
+  // Notify on every failure and success.
+  NOTIFY_ALWAYS = 4;
+}
+
+message PostSubmitFrequency {
+  // Run once a day approximately at the given hour. Time zone is UTC.
+  // Format of the string is HH:00 using 24 hour time. The minute part is ignored.
+  string daily_at_utc = 2;
+}
+
+message PostSubmitTriggerPathSet {
+  // P4 path expressions for files that trigger a postsubmit when they are changed.
+  // Supports a '-' prefix to exclude paths.
+  // Evaluated in order, last matching path expression wins.
+  // Example:
+  // path: "//..."
+  // path: "-//exclude"
+  // path: "//exclude/butinclude"
+  repeated string path = 1;
+}
+
+// Environment variable.
+message EnvVar {
+  string key = 1;
+  string value = 2;
+}
+
+// A task unit defines an execution of a binary that does not rely on the build system.
+message TaskUnit {
+  // The name of the cron unit.
+  string name = 1;
+
+  // Binary to use for the cron job.
+  // May refer to a checked-in binary or another build unit.
+  string bin = 2;
+
+  // Arguments to be passed to the cron binary.
+  repeated string args = 3;
+
+  // Marker for task units that are subject to postsubmit.
+  PostSubmit post_submit = 4;
+}
+
+// A cron unit defines a periodically executing binary.
+message CronUnit {
+  // The name of the cron unit.
+  string name = 1;
+
+  // Binary to use for the cron job.
+  // May refer to a checked-in binary or another build unit.
+  string bin = 2;
+
+  // Arguments to be passed to the cron binary.
+  repeated string args = 3;
+
+  // CronConfig. When present, the cron unit is picked up by the automatic cron runner.
+  CronConfig config = 4;
+}
+
+// Cron unit configuration.
+message CronConfig {
+  // Cron job frequency in minutes.
+  int64 frequency_minutes = 1;
+
+  // Notification configuration for the cron job system.
+  NotificationConfig notify = 3;
+}

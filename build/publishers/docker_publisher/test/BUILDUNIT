@@ -1,0 +1,12 @@
+build_unit {
+  name: "push_config"
+  target: ":push_config"
+  args: "--config=windows-gnu"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":push_config"
+  bin: "//build/publishers/docker_publisher"
+  args: "-dest=INSERT_REPO_PATH"
+}

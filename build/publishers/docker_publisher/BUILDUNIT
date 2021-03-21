@@ -1,0 +1,16 @@
+build_unit {
+  name: "docker_publisher"
+  target: ":docker_publisher"
+  args: "--config=windows-gnu"
+}
+
+test_unit {
+  name: "test"
+  target: "..."
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":docker_publisher"
+}

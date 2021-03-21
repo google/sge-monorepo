@@ -1,0 +1,8 @@
+manifest_entry:  {
+  name:  "go_lib_2b_updated"
+  set_as_local_repository:  true
+  git_src:  {
+    url:  "https://github.com/orphan_lib/go_lib_2b_updated"
+    commit:  "2a89db4749d1aa860ea42ab50491cdc40d9a199a"
+  }
+}

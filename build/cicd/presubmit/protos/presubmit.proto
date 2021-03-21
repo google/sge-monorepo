@@ -1,0 +1,103 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package presubmit;
+
+option go_package = "sge-monorepo/build/cicd/presubmit/protos/presubmitpb";
+
+import "build/cicd/presubmit/check/protos/check.proto";
+import "build/cicd/sgeb/protos/build.proto";
+
+// A Presbumit set represents a set of checks that need to pass in order for a submission to be
+// considered correct.
+//
+// A presubmit check consists of two parts:
+//
+// - Specifications that define what files it applies to (eg. "All rust files").
+//   This can mean inclusive (as the example before) or exclusive (eg. "except those in these
+//   directories").
+//   Note that a Presbumit is always executed in the context of a CicdFile message, from which
+//   its include messages should be relative to.
+// - A group of checks the that the presubmit must comply. Checks have the following properties:
+//   - Checks are a growing set of known tests and verifications that are applied to changes.
+//     The are defined in the checks/ directory.
+//   - Checks should be focused (check lint, no tabs, etc.).
+//   - There is more "generic" checks that permit users the flexibility to check arbitrary
+//     actions.
+message Presubmit {
+  // Pattern rules are:
+  //
+  // Patterns can either be repo-absolute (start with "//") or start without "/", in which they are
+  // repo-relative patterns. The explanation on how each behaves is as follows:
+  //
+  // If they start with "//", they are assumed to be based upon |repoRoot|, or in other words,
+  // it is understood to be a "repository absolute" pattern (eg. //1p/...).
+  //
+  // If they don't start with "//", they are assumed to be a relative path, and they will
+  // be appended to |mdDir|. These are understood to be a "relative pattern"
+  // (eg. "dir/*.rs", "...", etc.).
+  //
+  // The last part of the path must be one of the following:
+  //
+  // pattern (Based on https://golang.org/pkg/path/filepath/#Match):
+  //    { term }
+  // term:
+  //    '*'         matches any sequence of non-Separator characters
+  //    '?'         matches any single non-Separator character
+  //    '[' [ '^' ] { character-range } ']'
+  //                character class (must be non-empty)
+  //    c           matches character c (c != '*', '?', '\\', '[')
+  //    '\\' c      matches character c
+  //
+  // or the following special perforce patterns
+  //    ...     -> All files under that directory.
+  //    ....h   -> All files under that directory that end in .h
+  //
+  // Examples:
+  //  Relative
+  //    (empty)                   -> Implies "...", al files under this presubmit path.
+  //    ....rs                    -> All .rs files under this presubmit path.
+  //    game/Content/....uassert  -> All uasset files in the game/Content dir from this presubmit.
+  //
+  //  Absolute:
+  //    //game/...                -> Matches all file under //game/... from the repo root.
+  //    //some/path/....cc        -> All .cc files under //some/path from the repo root.
+  //    //some/path/*             -> All files within //some/path (non-recursive.
+  //    @repo//third_party/...    -> All files in the third_party dir of "@repo".
+  //
+  // (optional) Files that this presubmit applies to. If ommited, "..." is assumed.
+  repeated string include = 1;
+
+  // (optional) Files that this presbumit does not apply to.
+  // If both |includes| and |excludes| match, exclusion wins.
+  repeated string exclude = 2;
+
+  // Presubmit checks to perform.
+  repeated check.Check check = 3;
+
+  // build units to check
+  repeated check.CheckBuild check_build = 5;
+
+  // test units to check
+  repeated check.CheckTest check_test = 4;
+}
+
+// CheckResult is the result of a presubmit check.
+message CheckResult {
+  build.Result overall_result = 1;
+
+  repeated build.Result sub_results = 2;
+}

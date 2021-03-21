@@ -1,0 +1,21 @@
+build_unit {
+  name: "sgeb"
+  target: ":sgeb"
+  args: "--config=windows-gnu"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":sgeb"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=sgeb"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":sgeb"
+}

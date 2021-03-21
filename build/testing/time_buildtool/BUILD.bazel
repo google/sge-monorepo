@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "time_buildtool_lib",
+    srcs = ["time_buildtool.go"],
+    importpath = "sge-monorepo/build/testing/time_buildtool",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+    ],
+)
+
+go_binary(
+    name = "time_buildtool",
+    embed = [":time_buildtool_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,27 @@
+# Use symlinks instead of copying. Amazingly symlinks requires Windows developer mode...
+# https://docs.bazel.build/versions/master/command-line-reference.html#flag--windows_enable_symlinks
+startup --windows_enable_symlinks
+
+# Force cc rules to use the toolchain resolution system instead of the legacy system.
+# https://github.com/bazelbuild/bazel/issues/7260
+build --incompatible_enable_cc_toolchain_resolution
+
+# Put runfiles in the symlink tree.
+# https://docs.bazel.build/versions/master/command-line-reference.html#flag--enable_runfiles
+build --enable_runfiles
+
+# We set our definitions of Windows as the host platform.
+build --host_platform=@toolchains//platforms:windows
+
+# Definition for --config=windows
+build:windows --platforms=@toolchains//platforms:windows
+
+# Definition for --config=windows-gnu
+build:windows-gnu --platforms=@toolchains//platforms:windows-gnu
+
+# Definition for --config=toolchain-debug
+build:toolchain-debug --toolchain_resolution_debug
+build:toolchain-debug --cxxopt="-v"
+build:toolchain-debug --linkopt="-v"
+
+

@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "files",
+    srcs = ["files.go"],
+    importpath = "sge-monorepo/tools/ebert/handlers/files",
+    visibility = ["//visibility:public"],
+    deps = ["//tools/ebert/ebert"],
+)

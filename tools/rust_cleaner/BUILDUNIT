@@ -1,0 +1,22 @@
+build_unit {
+  name: "rust_cleaner"
+  target: ":rust_cleaner"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "rust_cleaner_bin"
+  build_unit: "//tools/rust_cleaner"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=rust_cleaner"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":rust_cleaner"
+}

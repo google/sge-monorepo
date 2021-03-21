@@ -1,0 +1,2 @@
+# Exclude files generated for IDE support.
+# gazelle:exclude vendor

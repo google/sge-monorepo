@@ -1,0 +1,51 @@
+test_unit {
+    name: "tests"
+    target: "..."
+    args: "--config=windows"
+}
+
+build_unit {
+    name: "p4_benchmark"
+    target: ":p4_benchmark"
+    args: "--config=ubuntu"
+}
+
+build_unit {
+    name: "p4_benchmark_win"
+    target: ":p4_benchmark"
+    args: "--config=windows"
+}
+
+publish_unit {
+  name: "p4_benchmark_publish"
+  build_unit: ":p4_benchmark_win"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=p4_benchmark"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_unit {
+    name: "file_stats"
+    target: ":file_stats"
+    args: "--config=ubuntu"
+}
+
+build_unit {
+    name: "file_stats_win"
+    target: ":file_stats"
+    args: "--config=windows"
+}
+
+publish_unit {
+  name: "file_stats_publish"
+  build_unit: ":file_stats_win"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=file_stats"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}

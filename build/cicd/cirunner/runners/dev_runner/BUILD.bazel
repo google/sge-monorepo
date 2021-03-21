@@ -1,0 +1,30 @@
+load("@//libs/bzl/build_test:build_test.bzl", "build_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "dev_runner_lib",
+    srcs = ["dev_runner.go"],
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/dev_runner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/runnertool",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/build",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//libs/go/cloud/compute",
+        "//libs/go/cloud/monitoring",
+        "//libs/go/cloud/secretmanager",
+        "//libs/go/log",
+        "//libs/go/log/cloudlog",
+        "//libs/go/p4lib",
+        "@com_google_cloud_go_spanner//:spanner",
+        "@go_googleapis//google/api:label_go_proto",
+        "@go_googleapis//google/api:metric_go_proto",
+    ],
+)
+
+go_binary(
+    name = "dev_runner",
+    embed = [":dev_runner_lib"],
+    visibility = ["//visibility:public"],
+)

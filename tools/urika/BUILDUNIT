@@ -1,0 +1,28 @@
+build_unit {
+  name: "urika"
+  target: ":urika"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "urika_bin"
+  build_unit: "//tools/urika"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=urika"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":urika"
+}
+
+test_suite {
+    name: "tests"
+    test_unit: "..."
+}

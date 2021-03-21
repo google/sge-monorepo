@@ -1,0 +1,23 @@
+load("//libs/bzl/build_test:build_test.bzl", "build_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "inplace_p4_publisher_lib",
+    srcs = ["inplace_p4_publisher.go"],
+    importpath = "sge-monorepo/build/publishers/inplace_p4_publisher",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/sgeb/buildtool",
+        "//build/cicd/sgeb/protos:build_go_proto",
+        "//build/packagemanifest",
+        "//libs/go/p4lib",
+        "//libs/go/sgeflag",
+        "@com_github_golang_glog//:glog",
+    ],
+)
+
+go_binary(
+    name = "inplace_p4_publisher",
+    embed = [":inplace_p4_publisher_lib"],
+    visibility = ["//visibility:public"],
+)

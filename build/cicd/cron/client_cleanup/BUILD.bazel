@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "client_cleanup_lib",
+    srcs = ["client_cleanup.go"],
+    importpath = "sge-monorepo/build/cicd/cron/client_cleanup",
+    visibility = ["//visibility:private"],
+    deps = ["//libs/go/p4lib"],
+)
+
+go_binary(
+    name = "client_cleanup",
+    embed = [":client_cleanup_lib"],
+    visibility = ["//visibility:public"],
+)

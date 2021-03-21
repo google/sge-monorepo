@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "unit_runner_lib",
+    srcs = ["unit_runner.go"],
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/unit_runner",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//build/cicd/cirunner/protos:cirunner_go_proto",
+        "//build/cicd/cirunner/runners/unit_runner/protos:unit_runnerpb_go_proto",
+        "//build/cicd/cirunner/runnertool",
+        "//build/cicd/monorepo",
+        "//build/cicd/sgeb/build",
+        "//environment/envinstall",
+        "//libs/go/log",
+        "//libs/go/log/cloudlog",
+        "//libs/go/p4lib",
+        "@com_github_golang_protobuf//proto:go_default_library",
+        "@io_bazel_rules_go//proto/wkt:timestamp_go_proto",
+    ],
+)
+
+go_binary(
+    name = "unit_runner",
+    embed = [":unit_runner_lib"],
+    visibility = ["//visibility:public"],
+)

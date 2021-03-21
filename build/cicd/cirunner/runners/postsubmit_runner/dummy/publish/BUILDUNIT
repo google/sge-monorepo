@@ -1,0 +1,9 @@
+build_unit {
+  name: "publish",
+  target: ":publish",
+}
+
+build_test_unit {
+  name: "publish_build_test"
+  build_unit: ":publish"
+}

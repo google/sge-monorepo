@@ -1,0 +1,21 @@
+build_unit{
+  name: "gazelle_wrapper"
+  target: ":gazelle_wrapper"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+    name: "gazelle_wrapper_test",
+    build_unit: ":gazelle_wrapper",
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: ":gazelle_wrapper"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=gazelle_wrapper"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}

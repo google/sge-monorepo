@@ -1,0 +1,66 @@
+checker_tool {
+  action: "gofmt"
+  bin: "checkfmt:checkfmt"
+  args: "-fix=$tool -w"
+  args: "-tool_path=//bin/windows/gofmt.exe"
+  supports_fix: true
+}
+
+checker_tool {
+  action: "buildfmt"
+  bin: "checkfmt:checkfmt"
+  args: "-fix=$tool"
+  args: "-tool_path=//bin/windows/buildifier.exe"
+  args: "-tool_arg=-type=build"
+  supports_fix: true
+}
+
+checker_tool {
+  action: "bzlfmt"
+  bin: "checkfmt:checkfmt"
+  args: "-fix=$tool"
+  args: "-tool_path=//bin/windows/buildifier.exe"
+  args: "-tool_arg=-type=bzl"
+  supports_fix: true
+}
+
+checker_tool {
+  action: "workspacefmt"
+  bin: "checkfmt:checkfmt"
+  args: "-fix=$tool"
+  args: "-tool_path=//bin/windows/buildifier.exe"
+  args: "-tool_arg=-type=workspace"
+  supports_fix: true
+}
+
+checker_tool {
+  action: "rustfmt"
+  bin: "checkfmt:checkfmt"
+  args: "-fix=$tool"
+  args: "-tool_path=//bin/windows/rustfmt.exe"
+  supports_fix: true
+}
+
+checker_tool {
+  action: "gazelle"
+  bin: "gazelle:gazelle"
+  supports_fix: true
+}
+
+checker_tool {
+  action: "banpython"
+  bin: "banrules:banrules"
+  args: "-rule_matcher=\\bpy_"
+  supports_fix: false
+}
+
+checker_tool {
+  action: "check_build_unit"
+  bin: "checkdesc:checkdesc"
+  needs_cl_description: true
+}
+
+checker_tool {
+  action: "check_build_unit"
+  bin: "checkbuildunit:checkbuildunit"
+}

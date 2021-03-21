@@ -1,0 +1,86 @@
+cc {
+  include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/flatbuffers/_virtual_includes/runtime_cc"
+  quote_include_dirs: "."
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin"
+  quote_include_dirs: "external/flatbuffers"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/flatbuffers"
+  quote_include_dirs: "external/glfw"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/glfw"
+  quote_include_dirs: "external/glm"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/glm"
+  quote_include_dirs: "external/lc"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/lc"
+  quote_include_dirs: "external/vulkan"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/vulkan"
+  quote_include_dirs: "external/bazel_tools"
+  quote_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/bazel_tools"
+  system_include_dirs: "external/glfw/windows/include"
+  system_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/glfw/windows/include"
+  system_include_dirs: "external/glm"
+  system_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/glm"
+  system_include_dirs: "external/vulkan/include"
+  system_include_dirs: "bazel-out/x64_windows-fastbuild/bin/external/vulkan/include"
+}
+deps: "//tools/shaderpacker_rust:shader_headers"
+deps: "@glfw//windows:glfwlib"
+deps: "@glm//:glmheaders"
+deps: "@lc//:lcheaders"
+deps: "@vulkan//:vulkan"
+files {
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/graphics-guy/hellovulkan/src/BitmapImage.cpp"
+    root_path: ""
+    short_path: "experimental/users/graphics-guy/hellovulkan/src/BitmapImage.cpp"
+  }
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/graphics-guy/hellovulkan/src/BitmapImage.h"
+    root_path: ""
+    short_path: "experimental/users/graphics-guy/hellovulkan/src/BitmapImage.h"
+  }
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/graphics-guy/hellovulkan/src/FileSystem.h"
+    root_path: ""
+    short_path: "experimental/users/graphics-guy/hellovulkan/src/FileSystem.h"
+  }
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/graphics-guy/hellovulkan/src/VkUtil.c"
+    root_path: ""
+    short_path: "experimental/users/graphics-guy/hellovulkan/src/VkUtil.c"
+  }
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/graphics-guy/hellovulkan/src/VkUtil.h"
+    root_path: ""
+    short_path: "experimental/users/graphics-guy/hellovulkan/src/VkUtil.h"
+  }
+  srcs {
+    owner_workspace_name: ""
+    path: "experimental/users/graphics-guy/hellovulkan/src/main.cpp"
+    root_path: ""
+    short_path: "experimental/users/graphics-guy/hellovulkan/src/main.cpp"
+  }
+}
+kind: "cc_binary"
+label {
+  label: "//experimental/users/graphics-guy/hellovulkan:hellovulkan"
+  name: "hellovulkan"
+  pkg: "experimental/users/graphics-guy/hellovulkan"
+  workspace_name: "sge"
+}
+outputs {
+  owner_workspace_name: ""
+  path: "bazel-out/x64_windows-fastbuild/bin/experimental/users/graphics-guy/hellovulkan/hellovulkan.exe"
+  root_path: "bazel-out/x64_windows-fastbuild/bin"
+  short_path: "experimental/users/graphics-guy/hellovulkan/hellovulkan.exe"
+}
+outputs {
+  owner_workspace_name: ""
+  path: "bazel-out/x64_windows-fastbuild/bin/experimental/users/graphics-guy/hellovulkan/other.exe"
+  root_path: "bazel-out/x64_windows-fastbuild/bin"
+  short_path: "experimental/users/graphics-guy/hellovulkan/other.exe"
+}
+

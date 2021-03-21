@@ -1,0 +1,5 @@
+test_unit {
+  name: "universe_test"
+  target: ":universe_test"
+  args: "--config=windows-gnu"
+}

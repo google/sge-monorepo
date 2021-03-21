@@ -1,0 +1,30 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "universe",
+    srcs = [
+        "universe.go",
+        "universe_config.go",
+    ],
+    importpath = "sge-monorepo/build/cicd/monorepo/universe",
+    visibility = [
+        "//build/cicd:__subpackages__",
+        "//tools/gigantick:__subpackages__",
+    ],
+    deps = [
+        "//build/cicd/monorepo",
+        "//libs/go/p4lib",
+    ],
+)
+
+go_test(
+    name = "universe_test",
+    srcs = ["universe_test.go"],
+    embed = [":universe"],
+    deps = [
+        "//libs/go/p4lib",
+        "//libs/go/p4lib/p4mock",
+        "//libs/go/sgetest",
+        "@com_github_google_go_cmp//cmp",
+    ],
+)

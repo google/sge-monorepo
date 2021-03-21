@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_embed_data", "go_library")
+
+go_embed_data(
+    name = "data",
+    srcs = [
+        "email.css",
+    ],
+    flatten = True,
+    package = "css",
+    string = True,
+    var = "Css",
+)
+
+go_library(
+    name = "css",
+    srcs = [
+        ":data",  # keep
+    ],
+    importpath = "sge-monorepo/build/cicd/cirunner/css",  # keep
+    visibility = ["//build/cicd/cirunner:__subpackages__"],
+)

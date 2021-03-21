@@ -1,0 +1,38 @@
+build_unit {
+  name: "build_dist_cli_windows"
+  target: ":build_dist_cli"
+  args: "--config=windows-gnu"
+}
+
+build_unit {
+  name: "build_dist_cli_ubuntu"
+  target: ":build_dist_cli"
+  args: "--config=ubuntu"
+}
+
+build_test_unit {
+  name: "build_test_windows"
+  build_unit: ":build_dist_cli_windows"
+}
+
+build_test_unit {
+  name: "build_test_ubuntu"
+  build_unit: ":build_dist_cli_ubuntu"
+}
+
+test_unit {
+    name: "tests"
+    target: "..."
+    args: "--config=windows"
+}
+
+publish_unit {
+  name: "build_dist_cli_windows_bin"
+  build_unit: ":build_dist_cli_windows"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=build_dist_cli"
+  args: "-out_dir=//bin/windows"
+  auto_publish {
+    args: "-submit_cl"
+  }
+}

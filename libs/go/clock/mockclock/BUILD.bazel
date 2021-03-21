@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "mockclock",
+    testonly = 1,
+    srcs = ["mockclock.go"],
+    importpath = "sge-monorepo/libs/go/clock/mockclock",
+    visibility = ["//visibility:public"],
+    deps = ["//libs/go/clock"],
+)

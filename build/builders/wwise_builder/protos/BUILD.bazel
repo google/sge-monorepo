@@ -1,0 +1,20 @@
+# Exclude files generated for IDE support.
+# gazelle:exclude soundbankpb
+
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "soundbank_proto",
+    srcs = ["soundbank.proto"],
+    visibility = ["//visibility:private"],
+)
+
+go_proto_library(
+    name = "soundbank_go_proto",
+    importpath = "sge-monorepo/build/builders/wwise_builder/protos/soundbankpb",
+    proto = ":soundbank_proto",
+    visibility = [
+        "//build/builders/wwise_builder:__subpackages__",
+    ],
+)

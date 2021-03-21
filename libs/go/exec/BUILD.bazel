@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "exec",
+    srcs = [
+        "exec.go",
+        "exec_default.go",
+        "exec_windows.go",
+    ],
+    importpath = "sge-monorepo/libs/go/exec",
+    visibility = ["//visibility:public"],
+)

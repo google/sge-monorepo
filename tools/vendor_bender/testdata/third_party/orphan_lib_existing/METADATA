@@ -1,0 +1,15 @@
+name:  "orphan_lib_existing"
+third_party:  {
+  source:  {
+    git_pkg:  {
+      url:  "https://github.com/orphan_lib/orphan_lib_existing"
+      sha:  "2a89db4749d1aa860ea42ab50491cdc40d9a199a"
+    }
+  }
+  last_upgrade_date:  {
+    year:  2020
+    month:  8
+    day:  6
+  }
+  is_local_repository:  true
+}

@@ -1,0 +1,11 @@
+test_unit {
+    name: "tests"
+    target: "..."
+    args: "--config=windows-gnu"
+}
+
+build_unit {
+    name: "windows_utils_test"
+    target: ":windows_utils_test"
+    args: "--config=windows-gnu"
+}

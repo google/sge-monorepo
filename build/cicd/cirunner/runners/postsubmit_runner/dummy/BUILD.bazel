@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "dummy_lib",
+    srcs = ["dummy.go"],
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/postsubmit_runner/dummy",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "dummy",
+    embed = [":dummy_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "dummy_test",
+    srcs = ["dummy_test.go"],
+    embed = [":dummy_lib"],
+)

@@ -1,0 +1,20 @@
+build_unit {
+  name: "shaderpacker"
+  target: ":shaderpacker"
+  args: "--config=windows"
+  args: "-c"
+  args: "opt"
+}
+
+publish_unit {
+  name: "shaderpacker_bin"
+  build_unit: "//tools/shaderpacker"
+  bin: "//build/publishers/cl_publisher"
+  args: "-name=shaderpacker"
+  args: "-out_dir=//bin/windows"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":shaderpacker"
+}

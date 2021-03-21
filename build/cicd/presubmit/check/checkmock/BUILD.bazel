@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "checkmock",
+    testonly = 1,
+    srcs = ["checkmock.go"],
+    importpath = "sge-monorepo/build/cicd/presubmit/check/checkmock",
+    visibility = [
+        "//build/checks:__subpackages__",
+        "//build/cicd:__subpackages__",
+    ],
+    deps = [
+        "//build/cicd/monorepo",
+        "//build/cicd/presubmit/check",
+        "//build/cicd/presubmit/check/protos:check_go_proto",
+        "//build/cicd/sgeb/protos:build_go_proto",
+    ],
+)

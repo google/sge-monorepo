@@ -1,0 +1,44 @@
+# Exclude files generated for IDE support.
+# gazelle:exclude buildpb
+# gazelle:exclude sgebpb
+
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "build_proto",
+    srcs = ["build.proto"],
+    visibility = [
+        "//build/cicd:__subpackages__",
+    ],
+    deps = ["@com_google_protobuf//:timestamp_proto"],
+)
+
+proto_library(
+    name = "sgeb_proto",
+    srcs = ["sgeb.proto"],
+    visibility = [
+        "//build/cicd/sgeb:__subpackages__",
+    ],
+)
+
+go_proto_library(
+    name = "build_go_proto",
+    importpath = "sge-monorepo/build/cicd/sgeb/protos/buildpb",
+    proto = ":build_proto",
+    visibility = [
+        "//build:__subpackages__",
+        "//tools/gigantick:__subpackages__",
+    ],
+)
+
+go_proto_library(
+    name = "sgeb_go_proto",
+    importpath = "sge-monorepo/build/cicd/sgeb/protos/sgebpb",
+    proto = ":sgeb_proto",
+    visibility = [
+        "//build/cicd/cirunner/runners:__subpackages__",
+        "//build/cicd/cirunner/runnertool:__subpackages__",
+        "//build/cicd/sgeb:__subpackages__",
+    ],
+)

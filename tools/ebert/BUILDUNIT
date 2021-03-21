@@ -1,0 +1,46 @@
+build_unit {
+  name: "ebert"
+  target: ":ebert"
+  args: "--config=ubuntu"
+  args: "-c"
+  args: "opt"
+}
+
+build_unit {
+  name: "ebert_windows"
+  target: ":ebert"
+  args: "--config=windows-gnu"
+  args: "-c"
+  args: "opt"
+}
+
+build_unit {
+  name: "ebert_windows_debug"
+  target: ":ebert"
+  args: "--config=windows-gnu"
+}
+
+build_test_unit {
+  name: "build_test"
+  build_unit: ":ebert"
+
+}
+build_test_unit {
+  name: "build_test_windows"
+  build_unit: ":ebert_windows"
+}
+
+publish_unit {
+  name: "publish"
+  build_unit: "//tools/ebert"
+  bin: "//build/publishers/gcs_publisher"
+  args: "-name=ebert"
+  args: "-bucket=INSERT_BUCKET"
+  args: "-upload_changed_only"
+}
+
+test_unit {
+  name: "tests"
+  target: "..."
+  args: "--config=windows-gnu"
+}

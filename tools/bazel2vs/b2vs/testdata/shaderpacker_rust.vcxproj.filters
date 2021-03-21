@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <None Include="D:\tools\shaderpacker_rust\src\main.rs"><Filter>src</Filter></None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{34EF91A0-2E99-5173-793B-60637269E146}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

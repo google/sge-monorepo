@@ -1,0 +1,19 @@
+# Exclude files generated for IDE support.
+# gazelle:exclude cronpb
+
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+
+proto_library(
+    name = "cronpb_proto",
+    srcs = ["cron.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["@com_google_protobuf//:timestamp_proto"],
+)
+
+go_proto_library(
+    name = "cronpb_go_proto",
+    importpath = "sge-monorepo/build/cicd/cirunner/runners/cron_runner/protos/cronpb",
+    proto = ":cronpb_proto",
+    visibility = ["//visibility:public"],
+)

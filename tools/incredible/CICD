@@ -1,0 +1,5 @@
+presubmit {
+    check_test {
+        test_unit: ":tests"
+    }
+}

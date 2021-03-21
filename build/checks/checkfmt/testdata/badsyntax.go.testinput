@@ -1,0 +1,7 @@
+package main
+
+// I have bad syntax
+{
+func    main() {
+}
+

@@ -1,0 +1,17 @@
+presubmit {
+  check_test {
+    test_unit: ":tests"
+  }
+  check_test {
+    test_unit: "//tools/gigantick:tests"
+  }
+  check_test {
+    test_unit: "//build/builders:test"
+  }
+  check_test {
+    test_unit: "//build/checks:test"
+  }
+  check_test {
+    test_unit: "//build/publishers:test"
+  }
+}
